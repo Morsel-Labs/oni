@@ -1,0 +1,5 @@
+# Caddy gets and renews the HTTPS certificate by itself.
+theonicurse.xyz, www.theonicurse.xyz {
+  encode gzip
+  reverse_proxy oni:8080
+}

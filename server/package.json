@@ -1,0 +1,20 @@
+{
+  "name": "oni-server",
+  "version": "1.0.0",
+  "description": "ONI game server: rooms, live database and accounts for theonicurse.xyz",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node test/verify.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "bs58": "^5.0.0",
+    "tweetnacl": "^1.0.3",
+    "ws": "^8.18.0"
+  }
+}

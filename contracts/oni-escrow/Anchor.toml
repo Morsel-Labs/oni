@@ -1,0 +1,19 @@
+[toolchain]
+anchor_version = "0.32.1"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.devnet]
+oni_escrow = "2amYWqLWcnrz1wFUnEEDrrvS6Tqew6XPhJzeDck3JFqR"
+
+[programs.localnet]
+oni_escrow = "2amYWqLWcnrz1wFUnEEDrrvS6Tqew6XPhJzeDck3JFqR"
+
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "npx ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

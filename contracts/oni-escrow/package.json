@@ -1,0 +1,14 @@
+{
+  "name": "oni-escrow",
+  "version": "0.1.0",
+  "description": "ONI 1v1 SOL escrow: Anchor program, JS client, devnet demo (unaudited)",
+  "scripts": {
+    "test": "cargo test -p oni_escrow && node tests/client.test.js",
+    "demo:devnet": "node scripts/devnet-demo.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@solana/web3.js": "^1.99.0"
+  },
+  "private": true
+}
