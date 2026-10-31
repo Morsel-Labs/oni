@@ -879,13 +879,13 @@ const PRESS_COUNT={P:0,K:0,S:0,U:0,T:0,L:0,R:0};
 function sampleInput(){
   let b=0;const has=k=>held.has(k)||held.has('t'+k)||pressed.has(k);
   if(has('L'))b|=IN.L;if(has('R'))b|=IN.R;if(has('U'))b|=IN.U;if(has('D'))b|=IN.D;if(has('P'))b|=IN.P;if(has('K'))b|=IN.K;if(has('S'))b|=IN.S;if(has('T'))b|=IN.T;
-  if(has('B')&&typeof M!=='undefined'&&M&&M.f){const me=mode==='guest'?1:0,f=M.f[me];if(f){const back=f.face>0?IN.L:IN.R,fwd=f.face>0?IN.R:IN.L;b=(b&~fwd)|back;}}
+  if(has('B')&&typeof M!=='undefined'&&M&&M.f){const me=myIdx(),f=M.f[me];if(f){const back=f.face>0?IN.L:IN.R,fwd=f.face>0?IN.R:IN.L;b=(b&~fwd)|back;}}
   for(const k of ['P','K','S','U','T','L','R'])if(pressed.has(k))PRESS_COUNT[k]++;
   pressed.clear();return b;
 }
 
 /* ---- Fight screen on touch devices: layout state, camera, pause ---- */
-const FIGHT_MODES=['cpu','host','tourney','training','boss','guest','spectate'];
+const FIGHT_MODES=['cpu','host','tourney','training','boss','guest','spectate','net'];
 function inFight(){return !!M&&FIGHT_MODES.includes(mode)&&!document.body.classList.contains('menu');}
 const PXI={ // 9x9 pixel icons for the action buttons
   P:['.........','..#####..','.#######.','##.#.#.##','#########','#########','.#######.','..#####..','.........'],
@@ -1398,11 +1398,11 @@ $('mute').onclick=()=>{auInit();setMute(!AU.muted);};
 try{if(localStorage.getItem('oni-mute')==='1')setMute(true);}catch(e){}
 
 function endPanel(){
-  endShown=true;const me=mode==='guest'?1:0;const won=M.winner===me;const row=$('end-row');row.innerHTML='';
+  endShown=true;const me=myIdx();const won=M.winner===me;const row=$('end-row');row.innerHTML='';
   bump('games');misProgress('play3');if(won){bump('wins');misProgress('win2');}if(M.perfect&&won){bump('perfect');misProgress('perfect');}
   if(mode!=='training')awardXP((won?100:40)+(M.perfect&&won?25:0),won?'victory':'good fight');
   if(mode==='cpu'&&won)addShards(SHARD_WIN[SEL.diff||'auto']||10,'win vs CPU');
-  if(mode==='host'||mode==='guest')misProgress('online');if(mode==='boss')misProgress('enma');
+  if(mode==='host'||mode==='guest'||mode==='net')misProgress('online');if(mode==='boss')misProgress('enma');
   const btn=(label,cls,fn)=>{const b=document.createElement('button');b.className='arc '+(cls||'');b.textContent=label;b.onclick=fn;row.appendChild(b);return b;};
   const link=(label,href)=>{const a=document.createElement('a');a.className='arc';a.href=href;a.target='_blank';a.rel='noopener';a.textContent=label;row.appendChild(a);};
   const share='https://x.com/intent/post?text='+encodeURIComponent((won?`I just won a 1v1 as ${fname(M.f[me].ch,palOf(M,me))} in ONI`:'I lost a 1v1 in ONI. Rematch soon')+'. The curse you choose. theonicurse.xyz');
@@ -1422,7 +1422,7 @@ function endPanel(){
     if(won){setStreak(streak()+1);recordPractice(streak(),M.f[0].ch);$('end-note').textContent=`Win streak: ${streak()}. The CPU fights harder next match.`;
       btn('Fight again','gold',startCPU);btn('Change fighter','',()=>openSelect('cpu'));btn('Menu','alt',toTitle);link('Post on X',share);}
     else{setStreak(0);contT=600;$('end-note').textContent='Continue?';btn('Continue','gold',startCPU);btn('Change fighter','',()=>openSelect('cpu'));btn('Menu','alt',toTitle);}
-  } else if(mode==='host'||mode==='guest'){
+  } else if(mode==='host'||mode==='guest'||mode==='net'){
     const p=payout(M.stake);
     $('end-note').innerHTML=(M.stake>0?(won?`You won <strong>${usd(p.win)}</strong> (demo).`:`You lost ${usd(M.stake)} (demo).`):(won?'You won the 1v1.':'You lost the 1v1.'))+
       (M.stake>0?`<br>This match added ${usd(p.season)} to the Season Cauldron and ${usd(p.airdrop)} to the Curse Cauldron. You got 1 airdrop point.`:'')+'<span id="rank-delta"></span>';updateDelta();
@@ -1437,31 +1437,27 @@ function endPanel(){
 /* ===================== ONLINE (room presence) ===================== */
 const NET={lobby:null,avail:null,room:null,role:null,code:null,peers:[],pc:{P:0,K:0,S:0,U:0},lastSeq:-1,prev:null,cur:null,curT:0,ready:false,matchId:null,joinTimer:null,stake:0,map:1,kit:'oni'};
 async function netInit(){try{if(!window.claude||!window.claude.use){NET.avail=false;return;}const r=await window.claude.use('room');NET.lobby=r;NET.avail=!!r;if(r)r.onPeers(ch=>{VIL.peers=ch.peers;},()=>{});}catch(e){NET.avail=false;}
+  // our server offers 'match' (the server runs the fight); claude.ai does not, and keeps the host-run presence flow below
+  if(NET.avail&&ON_SERVER)try{const mt=await Promise.race([window.claude.use('match'),new Promise(r=>setTimeout(()=>r(null),2000))]);if(mt&&mt.join){NET.mt=mt;mt.onStatus(netStatus);mt.onState(netState);}}catch(e){}
   if($('p-select').classList.contains('on')&&SEL.ctx==='online')openSelect('online');}
 function genCode(){const a='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<4;i++)s+=a[Math.floor(Math.random()*a.length)];return s;}
 async function netJoin(code,asHost){
+  if(NET.mt)return netJoinAuth(code,asHost);
   NET.code=code;NET.role=asHost?'host':'pending';NET.lastSeq=-1;NET.cur=null;NET.prev=null;NET.ready=false;
   try{NET.room=await NET.lobby.join('oni-'+code.toLowerCase());}catch(e){$('sel-note').textContent='Could not open the match. Try again in a moment.';return false;}
   NET.room.onPeers(ch=>{NET.peers=ch.peers;onPeers();},()=>netLost('The connection to the match ended.'));
   NET.room.presence(asHost?{r:'h',s:null,sk:NET.stake,mp:NET.map,fm:NET.fmt||'bo3',ck:KITS.indexOf(NET.kit),op:SEL.opal,t3:hasT3()?1:0}:{r:'x'});
   return true;
 }
-function netLeave(){if(NET.room){try{NET.room.leave();}catch(e){}}NET.room=null;NET.role=null;NET.peers=[];clearTimeout(NET.joinTimer);}
+function netLeave(){if(NET.auth){try{NET.mt.leave();}catch(e){}NET.auth=false;NET.seat=-1;NETA.snaps=[];NETA.final=null;}if(NET.room){try{NET.room.leave();}catch(e){}}NET.room=null;NET.role=null;NET.peers=[];clearTimeout(NET.joinTimer);}
 function netLost(msg){toTitle();openSelect('online');$('sel-note').textContent=msg;}
 function findPeer(r){return NET.peers.find(p=>!p.isMe&&p.presence&&p.presence.r===r);}
 function onPeers(){
   if(NET.role==='pending'){
     const h=findPeer('h');if(!h)return;clearTimeout(NET.joinTimer);
     if(findPeer('g')||findPeer('gp')){NET.role='spec';mode='spectate';NET.room.presence({r:'s'});show(null);$('quit').hidden=false;musicStart();lastEv=0;endShown=false;return;}
-    NET.role='review';NET.stake=h.presence.sk|0;NET.map=h.presence.mp|0;NET.fmt=FMTS[h.presence.fm]?h.presence.fm:'bo3';const hk=KITS[h.presence.ck|0]||'oni';
-    NET.room.presence({r:'gp',ck:KITS.indexOf(NET.kit),t3:hasT3()?1:0});const p=payout(NET.stake);
-    if(NET.stake>0&&paidBlock(NET.stake)){$('stake-note').innerHTML=paidBlock(NET.stake);$('b-accept').hidden=true;show('p-stake');return;}
-    if(NET.stake>300&&!canStake()){$('stake-note').innerHTML=`This match has a stake of <strong>${usd(NET.stake)}</strong>. Stakes above $3 need at least <strong>$30 of $ONI</strong> in your wallet.`;$('b-accept').hidden=true;show('p-stake');return;}
-    if(!MAPS[NET.map].stake&&!hasT3()){$('stake-note').innerHTML='This match is in the <strong>Oni Colosseum</strong>, the no-limit arena for Legendary fighter owners. Unlock Seiryu or Kage to enter.';$('b-accept').hidden=true;show('p-stake');return;}
-    $('b-accept').hidden=false;
-    $('stake-note').innerHTML=`Arena: <strong>${MAPS[NET.map].name}</strong>. Format: <strong>${FMTS[NET.fmt].label}</strong>. Your opponent plays ${fname(hk,0)}, you play ${fname(NET.kit,1)}.<br>`+
-      (NET.stake>0?`Stake <strong>${usd(NET.stake)}</strong> each. Pot ${usd(p.pot)}. Winner gets <strong>${usd(p.win)}</strong> after the ${(holderTier()||{fee:5}).fee}% fee.<br>Demo: no money moves in this version.`:'Friendly match, no stake.');
-    show('p-stake');return;
+    NET.room.presence({r:'gp',ck:KITS.indexOf(NET.kit),t3:hasT3()?1:0});
+    reviewStake(h.presence.sk,h.presence.mp,h.presence.fm,KITS[h.presence.ck|0]);return;
   }
   if(NET.role==='host'){
     const g=findPeer('g');
@@ -1473,7 +1469,18 @@ function onPeers(){
   }
   if((NET.role==='guest'||NET.role==='spec'||NET.role==='review')&&!findPeer('h'))netLost('The host left the match.');
 }
-$('b-accept').onclick=()=>{SFX.coin();NET.role='guest';mode='guest';NET.room.presence({r:'g',op:SEL.opal,ck:KITS.indexOf(NET.kit),t3:hasT3()?1:0,i:0,c:[0,0,0,0],rd:0});show(null);$('quit').hidden=false;musicStart();lastEv=0;endShown=false;};
+// the guest reviews arena, format and stake before taking the seat (both online paths)
+function reviewStake(sk,mp,fm,hk){
+    NET.role='review';NET.stake=sk|0;NET.map=mp|0;NET.fmt=FMTS[fm]?fm:'bo3';hk=hk||'oni';const p=payout(NET.stake);
+    if(NET.stake>0&&paidBlock(NET.stake)){$('stake-note').innerHTML=paidBlock(NET.stake);$('b-accept').hidden=true;show('p-stake');return;}
+    if(NET.stake>300&&!canStake()){$('stake-note').innerHTML=`This match has a stake of <strong>${usd(NET.stake)}</strong>. Stakes above $3 need at least <strong>$30 of $ONI</strong> in your wallet.`;$('b-accept').hidden=true;show('p-stake');return;}
+    if(!MAPS[NET.map].stake&&!hasT3()){$('stake-note').innerHTML='This match is in the <strong>Oni Colosseum</strong>, the no-limit arena for Legendary fighter owners. Unlock Seiryu or Kage to enter.';$('b-accept').hidden=true;show('p-stake');return;}
+    $('b-accept').hidden=false;
+    $('stake-note').innerHTML=`Arena: <strong>${MAPS[NET.map].name}</strong>. Format: <strong>${FMTS[NET.fmt].label}</strong>. Your opponent plays ${fname(hk,0)}, you play ${fname(NET.kit,1)}.<br>`+
+      (NET.stake>0?`Stake <strong>${usd(NET.stake)}</strong> each. Pot ${usd(p.pot)}. Winner gets <strong>${usd(p.win)}</strong> after the ${(holderTier()||{fee:5}).fee}% fee.<br>Demo: no money moves in this version.`:'Friendly match, no stake.');
+    show('p-stake');
+}
+$('b-accept').onclick=()=>{if(NET.auth){netAcceptAuth();return;}SFX.coin();NET.role='guest';mode='guest';NET.room.presence({r:'g',op:SEL.opal,ck:KITS.indexOf(NET.kit),t3:hasT3()?1:0,i:0,c:[0,0,0,0],rd:0});show(null);$('quit').hidden=false;musicStart();lastEv=0;endShown=false;};
 $('b-decline').onclick=()=>toTitle();
 async function createMatch(codeArg){if(!owns(SEL.kit)){openStore(SEL.kit);return;}if(stakeCents()>0&&!paidGate(stakeCents(),$('sel-note')))return;if(stakeCents()>300&&!canStake()){$('sel-note').textContent='Stakes above $3 need at least $30 of $ONI. Free, $1 and $3 matches need nothing.';toast('Hold $30 of $ONI for stakes above $3');return;}if(!MAPS[SEL.map].stake&&!hasT3())return;SFX.select();NET.fmt=SEL.fmt;NET.stake=stakeCents();NET.map=SEL.map;NET.kit=SEL.kit;const code=(typeof codeArg==='string'&&codeArg)?codeArg:genCode();$('mycode').textContent=code;
   $('wait-note').textContent=`${MAPS[NET.map].name}, ${usd(NET.stake)} each. Send this code to your opponent.`;show('p-wait');mode='hostwait';await netJoin(code,true);}
@@ -1496,17 +1503,95 @@ function hostTick(){
 }
 let pubT=0;
 function hostPublish(){const now=performance.now();if(now-pubT<30)return;pubT=now;try{NET.room.presence({r:'h',s:pack(M),sk:NET.stake,mp:NET.map,fm:NET.fmt||'bo3',ck:KITS.indexOf(NET.kit),rd:NET.ready?1:0});}catch(e){}}
+// Guest input goes out at most every 33 ms (<=30/s) and only when it changed (1 s keepalive), whatever the display rate:
+// a 120 Hz phone used to send 120/s and hit the server's flood cap. Presses survive the throttle as counters (c),
+// held directions in between are OR-ed into the next send.
+const GPRES={t:-1e9,s:'',dir:0};
 function guestTick(bits){
-  if(NET.role==='guest'){try{NET.room.presence({r:'g',op:SEL.opal,ck:KITS.indexOf(NET.kit),t3:hasT3()?1:0,i:bits,c:[PRESS_COUNT.P,PRESS_COUNT.K,PRESS_COUNT.S,PRESS_COUNT.U,PRESS_COUNT.T,PRESS_COUNT.L,PRESS_COUNT.R],rd:NET.ready?1:0});}catch(e){}}
+  if(NET.role==='guest'){GPRES.dir|=bits&(IN.L|IN.R|IN.U|IN.D);const now=performance.now();
+    if(now-GPRES.t>=33){const p={r:'g',op:SEL.opal,ck:KITS.indexOf(NET.kit),t3:hasT3()?1:0,i:GPRES.dir|bits,c:[PRESS_COUNT.P,PRESS_COUNT.K,PRESS_COUNT.S,PRESS_COUNT.U,PRESS_COUNT.T,PRESS_COUNT.L,PRESS_COUNT.R],rd:NET.ready?1:0};
+      const js=JSON.stringify(p);if(js!==GPRES.s||now-GPRES.t>=1000){GPRES.t=now;GPRES.s=js;GPRES.dir=0;try{NET.room.presence(p);}catch(e){}}}}
   const h=findPeer('h');if(!h||!h.presence||!h.presence.s)return;
   const s=h.presence.s;if(s.q===NET.lastSeq)return;NET.lastSeq=s.q;
-  NET.prev=NET.cur;NET.cur=unpack(s);NET.curT=performance.now();
+  const now=performance.now();if(NET.curT)NET.iv=Math.min(200,Math.max(16,NET.iv?NET.iv*0.8+(now-NET.curT)*0.2:now-NET.curT));
+  NET.prev=NET.cur;NET.cur=unpack(s);NET.curT=now;
   if(NET.matchId!==NET.cur.id){NET.matchId=NET.cur.id;snapshotBefore();NET.ready=false;endShown=false;lastEv=0;show(null);musicStart();}
   M=withSkins(NET.cur);
 }
 function interp(){
-  if(!NET.cur||!NET.prev)return NET.cur;const k=Math.min(1,(performance.now()-NET.curT)/33);const o=NET.cur;
+  if(!NET.cur||!NET.prev)return NET.cur;const k=Math.min(1,(performance.now()-NET.curT)/(NET.iv||33));const o=NET.cur;
   return Object.assign({},o,{f:o.f.map((f,i)=>{const p=NET.prev.f[i];if(!p||Math.abs(f.x-p.x)>30)return f;return Object.assign({},f,{x:p.x+(f.x-p.x)*k,y:p.y+(f.y-p.y)*k});})});
+}
+
+/* ---- Authoritative online (our server, window.claude.use('match')): the server runs the fight ----
+   Both players send one input mask per 60 Hz frame, the server steps sim.js and streams snapshots, and it writes the
+   result itself. The client renders snapshots through a small jitter buffer with interpolation. */
+const NETA={snaps:[],iv:16.7,jit:4,lastAt:0,acc:0,final:null,games:-1};
+function myIdx(){return mode==='guest'||(mode==='net'&&NET.seat===1)?1:0;}
+async function netJoinAuth(code,asHost){
+  NET.auth=true;NET.code=code;NET.seat=-1;NET.role=asHost?'host':'pending';NET.ready=false;NET.readySent=false;NETA.snaps=[];NETA.final=null;NETA.games=-1;
+  if(asHost){
+    try{await NET.mt.join(code,{as:'host',kit:NET.kit,pal:SEL.opal,stake:NET.stake,map:NET.map,fmt:NET.fmt||'bo3',t3:hasT3()?1:0});NET.seat=0;return true;}
+    catch(e){if(e&&e.code==='code_taken'){const c2=genCode();$('mycode').textContent=c2;return netJoinAuth(c2,true);}
+      NET.auth=false;$('wait-note').textContent='Could not open the match. Try again in a moment.';return false;}
+  }
+  let info;try{info=await NET.mt.peek(code);}catch(e){NET.auth=false;$('sel-note').textContent=e&&e.code==='not_found'?'No match found with code '+code+'. Check the code and that the host is still waiting.':'Could not open the match. Try again in a moment.';return false;}
+  const mine=info.seats.findIndex(x=>x&&DB.me&&x.uid===DB.me);
+  if(mine>=0){try{const st=await NET.mt.join(code,{as:mine?'seat':'host',kit:NET.kit,pal:SEL.opal,t3:hasT3()?1:0});if(st.st==='live')netAuthStart(st);else if(st.st==='waiting'){mode='hostwait';$('mycode').textContent=code;show('p-wait');}}catch(e){}return true;} // back to my own seat
+  if(info.seats[1]||info.st!=='waiting')return netWatch(code);
+  reviewStake(info.stake,info.map,info.fmt,info.seats[0]&&info.seats[0].kit);return true;
+}
+async function netWatch(code){
+  try{await NET.mt.join(code,{as:'watch'});}catch(e){NET.auth=false;$('sel-note').textContent='Could not open the match. Try again in a moment.';return false;}
+  NET.role='spec';mode='spectate';NETA.snaps=[];show(null);$('quit').hidden=false;musicStart();lastEv=0;endShown=false;return true;
+}
+async function netAcceptAuth(){
+  SFX.coin();$('b-accept').disabled=true;
+  try{const info=await NET.mt.join(NET.code,{as:'seat',kit:NET.kit,pal:SEL.opal,t3:hasT3()?1:0});if(info&&info.st==='live'&&info.seat>=0)netAuthStart(info);}
+  catch(e){$('b-accept').disabled=false;if(e&&e.code==='seat_taken'){netWatch(NET.code);return;}netLost(e&&e.code==='not_found'?'The host left the match.':'Could not join the match.');return;}
+  $('b-accept').disabled=false;
+}
+function netAuthStart(st){ // a (re)match went live on the server
+  if(NETA.games===st.games&&mode==='net')return;NETA.games=st.games;
+  NET.seat=st.seat;NET.role=st.seat===0?'host':'guest';mode='net';NETA.snaps=[];NETA.final=null;NETA.acc=0;NET.ready=false;NET.readySent=false;
+  snapshotBefore();lastEv=0;endShown=false;show(null);$('quit').hidden=false;musicStart();
+}
+function netStatus(st){
+  if(!NET.auth)return;NET.info=st;
+  if(st.st==='closed'){if(st.why==='replaced'){netLost('This match continued in another tab.');return;}
+    if(mode==='hostwait'||NET.role==='review'||mode==='spectate'||(mode==='net'&&!endShown))netLost(st.why==='host_left'||st.why==='host_gone'?'The host left the match.':'The match ended.');return;}
+  if(st.st==='live'&&st.seat>=0)netAuthStart(st);
+  if(mode==='net'&&st.why==='disconnect'){const o=st.seats[1-NET.seat];if(o&&!o.on)toast(`Opponent disconnected. They forfeit in ${Math.round((st.grace||10000)/1000)} s unless they return.`);}
+  if(mode==='net'&&st.why==='resume'&&st.seats.every(x=>x&&x.on))toast('Both players connected.');
+  if(st.st==='over'&&st.res&&st.res.end!=='ko'&&(mode==='net'||mode==='spectate')&&M&&M.scene!=='matchEnd'){
+    // forfeit or time cap: the server froze the fight; show the result it decided
+    NETA.final=Object.assign({},M,{scene:'matchEnd',sceneT:91,winner:st.res.w});
+    toast(st.res.end==='forfeit'?(mode==='net'&&st.res.w===myIdx()?'Your opponent left. You win by forfeit.':'Match forfeited.'):'Match stopped: time limit.');
+  }
+  if(mode==='hostwait'&&st.st==='waiting')$('wait-note').textContent=`${MAPS[NET.map].name}, ${usd(NET.stake)} each. Send this code to your opponent.`;
+}
+function netState(m){
+  if(!NET.auth)return;const s=unpack(m.s),t=m.at||performance.now();
+  if(NETA.lastAt){const d=t-NETA.lastAt;NETA.iv=NETA.iv*0.9+d*0.1;NETA.jit=NETA.jit*0.9+Math.abs(d-NETA.iv)*0.1;}NETA.lastAt=t;
+  const sn=NETA.snaps;if(sn.length&&sn[sn.length-1].s.id!==s.id)sn.length=0; // a new match: drop the old one
+  if(sn.length&&s.seq<=sn[sn.length-1].s.seq)return;
+  sn.push({t,s});if(sn.length>40)sn.splice(0,sn.length-40);
+}
+function netTick(dt){
+  if(mode==='net'){ // fixed 60 Hz input frames, independent of the display rate
+    NETA.acc+=dt;let n=0;while(NETA.acc>=1000/60&&n<6){NET.mt.sendInput(sampleInput());NETA.acc-=1000/60;n++;}if(n>=6)NETA.acc=0;
+    if(NET.ready&&!NET.readySent){NET.readySent=true;NET.mt.ready().catch(()=>{NET.readySent=false;NET.ready=false;});}
+  }
+  if(NETA.final){M=NETA.final;return M;}
+  const sn=NETA.snaps;if(!sn.length)return M;
+  // render a little in the past (1.5 snapshot intervals + jitter) and interpolate between the two snapshots around it
+  const delay=Math.min(120,Math.max(20,NETA.iv*1.5+NETA.jit*2)),rt=performance.now()-delay;
+  let i=0;while(i<sn.length-1&&sn[i+1].t<=rt)i++;if(i>2){sn.splice(0,i-2);i=2;}
+  const a=sn[i],b=sn[i+1];M=withSkins(a.s);
+  if(!b||b.t<=a.t||rt<=a.t)return M;
+  const k=Math.min(1,(rt-a.t)/(b.t-a.t));
+  return Object.assign({},M,{f:M.f.map((f,j)=>{const g=b.s.f[j];if(!g||Math.abs(g.x-f.x)>30)return f;return Object.assign({},f,{x:f.x+(g.x-f.x)*k,y:f.y+(g.y-f.y)*k});}),
+    proj:M.proj.map((p,j)=>{const q=b.s.proj[j];return q&&q.owner===p.owner&&Math.abs(q.x-p.x)<30?Object.assign({},p,{x:p.x+(q.x-p.x)*k,y:p.y+(q.y-p.y)*k}):p;})});
 }
 
 
@@ -1677,7 +1762,7 @@ function onBoard(){
   if($('p-cauldron').classList.contains('on'))renderCauldronInfo();
   if($('p-profile').classList.contains('on')&&!PROFILE.draft)renderProfile();
   if(mode==='title'){refreshTitle();refreshProfileBtn();}
-  if(endShown&&(mode==='host'||mode==='guest'))updateDelta();
+  if(endShown&&(mode==='host'||mode==='guest'||mode==='net'))updateDelta();
 }
 function updateDelta(){
   const el=$('rank-delta');if(!el||!NET.before)return;const me=myEntry();
@@ -2546,7 +2631,10 @@ async function vilAccept(){
 function vilPublish(force,away){
   if(!NET.lobby)return;const now=performance.now();
   const v=(!VIL.active||away||mode!=='village')?null:{x:Math.round(VIL.x),y:Math.round(VIL.y),d:VIL.dir,l:myLook(),av:myAvatar()||undefined,e:VIL.emote,et:VIL.et,w:VIL.walk>0?1:0,ch:VIL.chal&&Date.now()-VIL.chal.t<30000?{to:VIL.chal.to,code:VIL.chal.code}:null};
-  const s=JSON.stringify(v);if(!force&&(s===VIL.last||now-VIL.pubT<60))return;VIL.last=s;VIL.pubT=now;try{NET.lobby.presence({v});}catch(e){}
+  const s=JSON.stringify(v);if(!force&&(s===VIL.last||now-VIL.pubT<60))return;
+  // forced sends (emotes, challenges) still keep a 33 ms floor: a burst collapses into one trailing send
+  if(force&&now-VIL.pubT<33){clearTimeout(VIL.pubTm);VIL.pubTm=setTimeout(()=>vilPublish(true,away),34);return;}
+  VIL.last=s;VIL.pubT=now;try{NET.lobby.presence({v});}catch(e){}
 }
 function vilInput(bits){
   const edge=bits&~VIL.prev;VIL.prev=bits;
@@ -2741,7 +2829,7 @@ function renderMissions(){const s=misState();const got=checkAch();
   h+=`<div class="mis-head"><h3>Spirit Shards</h3><small>win vs the CPU · ${shardsToday()}/${SHARD_CAP} today</small></div><div class="mx-shards"><div><b>${shards()}</b><span>Spirit Shards</span><small>Not ONI, not tradeable, no cash value. ${SHARD_CHEST} shards = 1 reward chest.</small></div><button type="button" class="arc" id="trade-shards" ${shards()<SHARD_CHEST?'disabled':''}>Trade ${SHARD_CHEST} for a chest</button></div>`;
   $('mis-body').innerHTML=h;drawChestIcon();{const ts=document.getElementById('trade-shards');if(ts)ts.onclick=()=>{tradeShards();renderMissions();};}{const oc=document.getElementById('open-chest');if(oc)oc.onclick=()=>{const r=openChest();if(r){toast(r.dupe?`${r.tier}: ${r.item} (duplicate, +150 XP)`:`${r.tier}: ${r.item}!`);}renderMissions();};}const cr=document.getElementById('copy-ref');if(cr)cr.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(ref).then(()=>toast('Invite link copied'),()=>toast(ref));};}
 /* ---- K.O. card: a shareable image of the finish ---- */
-function koCard(){const me=mode==='guest'?1:0;const won=M&&M.winner===me;const c=document.createElement('canvas');c.width=960;c.height=540;const g=c.getContext('2d');{const sc=$('cv'),sh=Math.min(sc.height,sc.width*9/16);g.drawImage(sc,0,(sc.height-sh)/2,sc.width,sh,0,0,960,540);}
+function koCard(){const me=myIdx();const won=M&&M.winner===me;const c=document.createElement('canvas');c.width=960;c.height=540;const g=c.getContext('2d');{const sc=$('cv'),sh=Math.min(sc.height,sc.width*9/16);g.drawImage(sc,0,(sc.height-sh)/2,sc.width,sh,0,0,960,540);}
   g.fillStyle='rgba(10,5,6,.55)';g.fillRect(0,420,960,120);g.font='28px "Press Start 2P", monospace';g.textAlign='left';g.fillStyle=won?'#FFB000':'#F3E9E4';
   g.fillText(won?'K.O. VICTORY':'GOOD FIGHT',30,470);g.font='14px "Press Start 2P", monospace';g.fillStyle='#F3E9E4';g.fillText(fname(M.f[me].ch,palOf(M,me),M.f[me].skin)+' vs '+fname(M.f[1-me].ch,palOf(M,1-me),M.f[1-me].skin),30,505);
   g.textAlign='right';g.fillStyle='#D7262E';g.font='34px "Press Start 2P", monospace';g.fillText('ONI',930,475);g.font='11px "Press Start 2P", monospace';g.fillStyle='#C9A9A2';g.fillText('theonicurse.xyz',930,505);return c;}
@@ -3335,7 +3423,7 @@ function render(m){
     if(mode==='training'&&!TUT.on)drawHitboxes(m);
     for(const p of FX.pops)txt(p.text,Math.max(48,Math.min(272,p.x)),p.y,7,p.c,'#1A0506');
     screenFx(true);camGrab(m);ctx.setTransform(3,0,0,3,0,0);}
-  const me=mode==='guest'?1:0;if(mode!=='demo')hud(m,mode==='spectate'?-1:me);
+  const me=myIdx();if(mode!=='demo')hud(m,mode==='spectate'?-1:me);
   if(!cam)for(const p of FX.pops)txt(p.text,Math.max(48,Math.min(272,p.x)),p.y,7,p.c,'#1A0506');
   if(mode==='training')drawTraining(m);
   if(m.scene==='intro'){const nd=m.need||2,fin=nd>1&&m.wins[0]===nd-1&&m.wins[1]===nd-1;
@@ -3382,8 +3470,8 @@ function loop(now){if(DEMO_BADGE){const fight=!!M&&mode!=='title'&&mode!=='villa
       if(mode==='cpu'&&M&&M.scene==='matchEnd'&&contT>0&&M.winner!==0){contT-=dt/16.67;if(contT<=0)toTitle();}
     }
     render(M);
-  } else if(mode==='guest'||mode==='spectate'){
-    guestTick(sampleInput());const m=interp();processEvents(M);
+  } else if(mode==='guest'||mode==='spectate'||mode==='net'){
+    const m=NET.auth?netTick(dt):(guestTick(sampleInput()),interp());processEvents(M);
     if(M&&M.scene==='matchEnd'&&M.sceneT>90&&!endShown)endPanel();
     render(m||null);
   } else render(null);

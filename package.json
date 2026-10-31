@@ -5,8 +5,12 @@
   "description": "ONI: The Curse You Choose. 1v1 pixel fighting game, village hub and game server.",
   "scripts": {
     "build": "node tools/build.js",
-    "test": "node tests/mech.js && node tests/flow.js",
-    "server": "cd server && npm install && npm start"
+    "test": "node tests/mech.js && node tests/flow.js && node server/test/sim_sync.js",
+    "server": "cd server && npm install && npm start",
+    "check": "node tools/check.js",
+    "check:sim": "node tools/check-sim-sync.js"
   },
-  "devDependencies": { "@napi-rs/canvas": "^0.1.53" }
+  "devDependencies": {
+    "@napi-rs/canvas": "^0.1.53"
+  }
 }

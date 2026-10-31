@@ -1,8 +1,11 @@
 // End-to-end demo of the escrow on Solana DEVNET (test SOL only, no real money).
 // Prerequisites: `anchor build && anchor deploy --provider.cluster devnet`, then
 //   PROGRAM_ID=<deployed id> node scripts/devnet-demo.js
-// It creates throwaway wallets, funds them from the devnet faucet, initializes the config
-// (first run only), plays a 0.01 SOL match, settles it as the referee and prints explorer links.
+// The config can only be initialized by the program's upgrade authority, so the demo loads
+// the deploy wallet from ADMIN_KEYPAIR (default ~/.config/solana/id.json) as admin.
+// It creates throwaway players and a throwaway referee, plays a 0.01 SOL match against a
+// NAMED opponent, settles it as the referee and prints explorer links.
+const fs = require('fs'), os = require('os'), path = require('path');
 const { Connection, Keypair, LAMPORTS_PER_SOL, Transaction, sendAndConfirmTransaction, clusterApiUrl } = require('@solana/web3.js');
 const { client } = require('../client/escrow');
 
@@ -10,6 +13,7 @@ const RPC = process.env.RPC_URL || clusterApiUrl('devnet');
 if (!RPC.includes('devnet') && !process.env.ALLOW_NON_DEVNET) throw new Error('Refusing to run outside devnet.');
 const PROGRAM_ID = process.env.PROGRAM_ID;
 if (!PROGRAM_ID) throw new Error('Set PROGRAM_ID to the deployed devnet program id.');
+const ADMIN_PATH = process.env.ADMIN_KEYPAIR || path.join(os.homedir(), '.config', 'solana', 'id.json');
 
 const conn = new Connection(RPC, 'confirmed');
 const esc = client(PROGRAM_ID);
@@ -25,27 +29,30 @@ const fund = async (kp, sol) => {
 };
 
 (async () => {
-  const [admin, referee, playerA, playerB, treasury, seasonPot, cursePot] = Array.from({ length: 7 }, () => Keypair.generate());
+  const admin = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(fs.readFileSync(ADMIN_PATH, 'utf8'))));
+  const [referee, playerA, playerB, treasury, seasonPot, cursePot] = Array.from({ length: 6 }, () => Keypair.generate());
   console.log('Funding test wallets from the devnet faucet...');
-  for (const kp of [admin, referee, playerA, playerB]) await fund(kp, 1);
-  for (const kp of [treasury, seasonPot, cursePot]) await fund(kp, 0.01); // rent-exempt receivers
+  for (const kp of [playerA, playerB]) await fund(kp, 1);
 
-  const { config } = esc.pdas(0);
-  if (!(await conn.getAccountInfo(config))) {
+  if (!(await conn.getAccountInfo(esc.config))) {
     await send(esc.initializeConfig({ admin: admin.publicKey, referee: referee.publicKey, treasury: treasury.publicKey,
       seasonPot: seasonPot.publicKey, cursePot: cursePot.publicKey }), [admin], 'init config');
   } else {
-    console.log('Config already exists: set TREASURY/SEASON/CURSE/REFEREE to the existing ones to settle (see README).');
-    process.exit(0);
+    // Existing config: rotate the referee to this run's throwaway key (admin only).
+    await send(esc.setReferee({ admin: admin.publicKey, referee: referee.publicKey }), [admin], 'set referee');
   }
 
   const matchId = Date.now();
   const stake = 0.01 * LAMPORTS_PER_SOL;
-  await send(esc.createMatch({ player: playerA.publicKey, matchId, stakeLamports: stake }), [playerA], 'create match');
-  await send(esc.joinMatch({ player: playerB.publicKey, matchId }), [playerB], 'join match');
+  await send(esc.createMatch({ player: playerA.publicKey, matchId, stakeLamports: stake, opponent: playerB.publicKey }), [playerA], 'create match');
+  await send(esc.joinMatch({ player: playerB.publicKey, playerA: playerA.publicKey, matchId }), [playerB], 'join match');
   const before = await conn.getBalance(playerA.publicKey);
-  await send(esc.settleMatch({ referee: referee.publicKey, matchId, winner: playerA.publicKey, feeBps: 500,
-    treasury: treasury.publicKey, seasonPot: seasonPot.publicKey, cursePot: cursePot.publicKey }), [referee], 'settle (A wins)');
+  // The referee needs no SOL of its own: player A pays the fee for this transaction.
+  const tx = new Transaction().add(esc.settleMatch({ referee: referee.publicKey, playerA: playerA.publicKey, playerB: playerB.publicKey,
+    matchId, winner: playerA.publicKey, feeBps: 500 }));
+  tx.feePayer = playerA.publicKey;
+  const sig = await sendAndConfirmTransaction(conn, tx, [playerA, referee]);
+  console.log(`${'settle (A wins)'.padEnd(16)} ${link(sig)}`);
   const after = await conn.getBalance(playerA.publicKey);
-  console.log(`Winner received ${(after - before) / LAMPORTS_PER_SOL} SOL (expected 0.019).`);
+  console.log(`Player A balance change ${(after - before) / LAMPORTS_PER_SOL} SOL (0.019 prize + match rent back - tx fee).`);
 })().catch((e) => { console.error(e); process.exit(1); });

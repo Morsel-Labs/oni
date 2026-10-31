@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Build, freshness, game + server tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+      - name: Install
+        run: npm ci || npm install
+      - name: Build
+        run: npm run build
+      # dist/ and server/public/index.html are committed (served and deployed as-is),
+      # so they must be exactly what `npm run build` produces from game/.
+      - name: Built files are committed and up to date
+        run: |
+          if ! git diff --exit-code --stat -- dist server/public || [ -n "$(git status --porcelain -- dist server/public)" ]; then
+            echo "::error::dist/ or server/public/ is stale. Run 'npm run build' and commit the result."
+            git status --porcelain -- dist server/public
+            exit 1
+          fi
+      - name: Sim sync (game/sim.js == server/src/sim.js)
+        run: node tools/check-sim-sync.js
+      - name: Game tests
+        run: npm test
+      - name: Server tests
+        working-directory: server
+        run: |
+          npm ci || npm install
+          npm test
+
+  escrow:
+    name: Escrow (cargo test + JS client checks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: contracts/oni-escrow
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: contracts/oni-escrow
+      - name: cargo test
+        run: cargo test --locked -p oni_escrow
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: contracts/oni-escrow/package-lock.json
+      - name: Install client deps
+        run: npm ci || npm install
+      - name: Client checks
+        run: npm run test:client
+
+  mobile:
+    name: Mobile layout smoke (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install
+        run: |
+          npm ci || npm install
+          npm install --no-save playwright@1
+          npx playwright install --with-deps chromium
+      - name: Build
+        run: npm run build
+      - name: Screenshots + layout audit
+        run: node tools/mobile-shots.js "$RUNNER_TEMP/oni-shots"
+      - name: Fail on small targets, overflow, off-screen controls or page errors
+        run: node tools/check-mobile-report.js "$RUNNER_TEMP/oni-shots/report.json" --min-screens=88
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-shots
+          path: ${{ runner.temp }}/oni-shots
+          retention-days: 7

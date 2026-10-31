@@ -1,16 +1,21 @@
 // Presence rooms: the village lobby (sharded, 40 players each) and private match rooms.
+// Access is decided by opts.access(conn, name, viaLobby) -> 'rw' | 'ro' | null:
+// the lobby is open to every signed-in player; a private room is bound to a match and only its
+// seated players may publish presence there (others are read-only spectators, or refused).
 const LOBBY_CAP = 40, MAX_PRESENCE = 4096;
 class Rooms {
-  constructor() { this.rooms = new Map(); this.dirty = new Set(); setInterval(() => this.flush(), 50); }
+  constructor(opts) { this.access = (opts && opts.access) || (() => 'rw'); this.rooms = new Map(); this.dirty = new Set(); setInterval(() => this.flush(), 50); }
   room(name) { let r = this.rooms.get(name); if (!r) { r = { name, members: new Map() }; this.rooms.set(name, r); } return r; }
   lobbyFor(conn) {
     for (let i = 0; ; i++) { const n = 'lobby#' + i; const r = this.room(n); if (r.members.size < LOBBY_CAP || r.members.has(conn.peer)) return n; }
   }
-  join(conn, name) { const r = this.room(name); r.members.set(conn.peer, { conn, presence: {}, updatedAt: Date.now() }); conn.rooms.add(name); this.dirty.add(name); }
+  join(conn, name, viaLobby) {
+    const mode = this.access(conn, name, !!viaLobby); if (!mode) return 'not_permitted';
+    const r = this.room(name); r.members.set(conn.peer, { conn, presence: {}, updatedAt: Date.now(), ro: mode === 'ro' }); conn.rooms.add(name); this.dirty.add(name); return null; }
   leave(conn, name) { const r = this.rooms.get(name); if (!r) return; r.members.delete(conn.peer); conn.rooms.delete(name); this.dirty.add(name); if (!r.members.size) this.rooms.delete(name); }
   leaveAll(conn) { for (const n of [...conn.rooms]) this.leave(conn, n); }
   presence(conn, name, patch) {
-    const r = this.rooms.get(name); const m = r && r.members.get(conn.peer); if (!m) return 'not_found';
+    const r = this.rooms.get(name); const m = r && r.members.get(conn.peer); if (!m) return 'not_found'; if (m.ro) return 'not_permitted';
     const next = Object.assign({}, m.presence);
     for (const k of Object.keys(patch || {})) { if (patch[k] === null) delete next[k]; else next[k] = patch[k]; }
     if (JSON.stringify(next).length > MAX_PRESENCE) return 'invalid_argument';

@@ -21,8 +21,9 @@
       if (!r) { localStorage.removeItem('oni-token'); await token(); ws.close(); return; }
       me = r.id; myPeer = r.peer;
       for (const [id, s] of snaps) ws.send(JSON.stringify({ t: 'sub', sid: id, coll: s.coll, q: s.q }));
-      for (const room of wantRooms) { await call({ t: 'join', room }); if (presNow.get(room)) ws.send(JSON.stringify({ t: 'pres', room, patch: presNow.get(room) })); }
+      for (const room of wantRooms) { try { await call({ t: 'join', room }); } catch (e) { continue; } if (presNow.get(room)) ws.send(JSON.stringify({ t: 'pres', room, patch: presNow.get(room) })); }
       readyRes();
+      Match.resume();
     };
     ws.onmessage = e => {
       const m = JSON.parse(e.data);
@@ -32,6 +33,7 @@
         const ids = new Set(prev.map(p => p.peer)), now = new Set(m.peers.map(p => p.peer));
         const ch = { peers: m.peers, joined: m.peers.filter(p => !ids.has(p.peer)), left: prev.filter(p => !now.has(p.peer)), updated: m.peers };
         for (const cb of peerCbs.get(m.room) || []) try { cb(ch); } catch (err) { console.error(err); } }
+      else if (m.t === 'ms' || m.t === 'mx') Match.recv(m);
     };
     ws.onclose = () => { for (const p of pending.values()) p.rej(Object.assign(new Error('closed'), { code: 'upstream_error' })); pending.clear(); setTimeout(connect, 1500); };
   }
@@ -59,6 +61,41 @@
       join(n) { return Promise.resolve(Room(n)); }
     };
   }
+  /* 'match': the server-authoritative 1v1 (see server/README.md, "Authoritative 1v1").
+     join(code, {as:'host'|'seat'|'watch', kit, pal, stake, map, fmt, t3}) -> info; peek(code) -> info;
+     sendInput(mask) queues one 60 Hz input frame (batched and resent until acked); onState(cb) gets every
+     snapshot {s: packed state, a: ack, c: consumed, at: arrival ms}; onStatus(cb) gets status changes; ready(); leave(). */
+  const Match = (() => {
+    let cur = null, frame = 0, unacked = [], flushQ = false;
+    const stateCbs = new Set(), statusCbs = new Set();
+    const T = { host: 'mh', seat: 'mj', watch: 'mw' };
+    function flush() {
+      flushQ = false; if (!cur || cur.as === 'watch' || !unacked.length || !ws || ws.readyState !== 1) return;
+      const b = unacked.slice(-64); ws.send(JSON.stringify({ t: 'mi', f: frame - b.length, b }));
+    }
+    function msg(code, opts) { return Object.assign({}, opts || {}, { t: T[(opts && opts.as) || 'seat'], code }); }
+    return {
+      recv(m) {
+        if (!cur || m.k && m.k !== cur.code || m.code && m.code !== cur.code) return;
+        if (m.t === 'ms') { if (m.a != null && m.a >= 0) { const keep = frame - 1 - m.a; unacked = keep > 0 ? unacked.slice(-keep) : []; } m.at = performance.now(); for (const cb of stateCbs) try { cb(m); } catch (e) { console.error(e); } }
+        else { if (m.st === 'closed') cur = null; for (const cb of statusCbs) try { cb(m); } catch (e) { console.error(e); } }
+      },
+      resume() { if (!cur) return; const c = cur; call(msg(c.code, c.opts)).then(flush, e => { if (cur === c) this.recv({ t: 'mx', code: c.code, st: 'closed', why: (e && e.code) || 'lost' }); }); },
+      api: {
+        async peek(code) { await ready; return call({ t: 'mp', code }); },
+        async join(code, opts) { await ready; opts = Object.assign({ as: 'seat' }, opts); code = String(code).toUpperCase();
+          if (!cur || cur.code !== code) { frame = 0; unacked = []; }
+          const prev = cur; cur = { code, as: opts.as, opts }; // set first: the server may send status before the reply
+          try { return await call(msg(code, opts)); } catch (e) { cur = prev && prev.code === code ? prev : null; throw e; } },
+        sendInput(mask) { if (!cur || cur.as === 'watch') return; unacked.push(mask & 255); frame++; if (unacked.length > 240) unacked.shift(); if (!flushQ) { flushQ = true; queueMicrotask(flush); } },
+        onState(cb) { stateCbs.add(cb); return () => stateCbs.delete(cb); },
+        onStatus(cb) { statusCbs.add(cb); return () => statusCbs.delete(cb); },
+        async ready() { await ready; return call({ t: 'mr' }); },
+        leave() { const was = cur; cur = null; unacked = []; if (was && ws && ws.readyState === 1) ws.send(JSON.stringify({ t: 'ml' })); },
+        get code() { return cur && cur.code; }
+      }
+    };
+  })();
   const started = token().then(connect);
   const lobby = Room('lobby');
   window.claude = {
@@ -66,6 +103,7 @@
       await started; await ready;
       if (cap === 'room') return lobby;
       if (cap === 'db') return { collection: c => Query(c, {}) };
+      if (cap === 'match') return Match.api;
       if (cap === 'user') return { id: async () => me, profiles: async ids => call({ t: 'names', ids }) };
       return null;
     }
