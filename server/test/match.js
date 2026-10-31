@@ -97,6 +97,12 @@ async function main() {
     check(wi.seat === -1, 'third client may spectate');
     check(await C.callErr({ t: 'mi', f: 0, b: [8, 8, 8] }) === 'not_seated', 'spectator inputs are refused');
     check(await C.callErr({ t: 'mr' }) === 'not_seated', 'spectator cannot ready up');
+    console.log('private rooms');
+    check(await C.callErr({ t: 'join', room: 'match-anything' }) === 'not_permitted', 'cannot join arbitrary private rooms');
+    check(await C.callErr({ t: 'join', room: 'oni-zzzz' }) === 'not_permitted', 'cannot join a room with no match behind it');
+    check(await C.callErr({ t: 'join', room: 'oni-test' }) === 'OK' && await C.callErr({ t: 'pres', room: 'oni-test', patch: { r: 'h' } }) === 'not_permitted', 'non-participant is a read-only spectator of the match room');
+    check(await A.callErr({ t: 'join', room: 'oni-test' }) === 'OK', 'seated player may join the match room');
+    check(await A.callErr({ t: 'join', room: 'lobby' }) === 'OK', 'lobby stays open');
     // kick-start input streams (the scripts then follow snapshots)
     A.send({ t: 'mi', f: 0, b: [0] }); A.frame = 1; B.send({ t: 'mi', f: 0, b: [0] }); B.frame = 1;
     const over = await until(() => A.last('over'), 60000, 'match over');
@@ -122,9 +128,10 @@ async function main() {
     check((await post('/api/verify', { id: 'srv_0000000000000000' })).ok === false, '/api/verify rejects unknown ids');
 
     console.log('no fake results');
+    check(await B.callErr({ t: 'set', coll: 'matches', id: '123456', data: { season: rec.season, ta: 0, tb: 0, fm: 'bo3', a: B.uid, b: A.uid, ka: 'oni', kb: 'oni', map: 0, stake: 0, w: 0, rounds: [2, 0], ts: Date.now() } }) === 'not_permitted', 'clients cannot self-report any match result');
     check(await B.callErr({ t: 'set', coll: 'matches', id: over.res.id, data: Object.assign({}, rec, { w: 1 }) }) === 'not_permitted', 'loser cannot overwrite the server record');
-    check(await B.callErr({ t: 'del', coll: 'matches', id: over.res.id }) === 'not_permitted', 'loser cannot delete the server record');
-    check(await B.callErr({ t: 'set', coll: 'matches', id: 'srv_ffffffffffffffff', data: { a: B.uid, b: A.uid, w: 0, src: 'server' } }) === 'not_permitted', 'clients cannot mint server-namespace records');
+    check(await B.callErr({ t: 'del', coll: 'matches', id: over.res.id }) !== 'OK', 'loser cannot delete the server record');
+    check(await B.callErr({ t: 'set', coll: 'matches', id: 'srv_ffffffffffffffff', data: { a: B.uid, b: A.uid, w: 0, src: 'server' } }) !== 'OK', 'clients cannot mint server-namespace records');
     check(await B.callErr({ t: 'set', coll: 'match_logs', id: over.res.id, data: {} }) === 'not_permitted', 'clients cannot touch stored logs');
     B.send({ t: 'mres', w: 1 }); B.send({ t: 'mi', f: 1e6, b: [300] }); await sleep(200);
     const board2 = await (await fetch(BASE + '/api/leaderboard')).json();

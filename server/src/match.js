@@ -12,11 +12,10 @@ const TICK_MS = 1000 / 60;
 const FMTS = { bo3: { need: 2, hpMul: 1 }, ko: { need: 1, hpMul: 1 } };
 const MAPS = 9, MAX_STAKE = 50000, MAX_PAL = 4;
 const MAX_FRAMES = 60 * 60 * 20;          // same cap replayMatch accepts (20 min)
-const SEASON_START = Date.UTC(2026, 8, 28), SEASON_LEN = 14 * 86400000; // mirrors game/main.js SEASON
 const CODE_RE = /^[A-Z0-9]{4,8}$/;
 const num = (v, d) => (v != null && v !== '' && isFinite(+v) ? +v : d);
 
-function season(now) { return Math.max(1, Math.floor((now - SEASON_START) / SEASON_LEN) + 1); }
+const season = require('./schema').seasonOf; // the same season clock the game uses
 function err(code) { return Object.assign(new Error(code), { code }); }
 function sha256(s) { return crypto.createHash('sha256').update(s).digest('hex'); }
 
@@ -146,9 +145,10 @@ class Matches {
   }
   // ---- messages from server.js ----
   handle(conn, m, reply) {
-    if (!Matches.TYPES.includes(m.t)) return;
+    if (!Matches.TYPES.includes(m.t)) return false;
     try { const r = this[m.t](conn, m); if (r !== undefined) reply(true, r); }
     catch (e) { reply(false, null, e.code || 'upstream_error'); }
+    return true;
   }
   validKit(k) { return typeof k === 'string' && S.KITS.includes(k); }
   player(m) {
@@ -228,21 +228,20 @@ class Matches {
     const id = 'srv_' + crypto.randomBytes(8).toString('hex'), hash = 'sha256:' + sha256(log), ts = this.now();
     const proof = Object.assign(S.matchProof(Object.assign({}, m, { log: s.log })), { winner, end, id, code: s.code, a: a.uid, b: b.uid, ts });
     try {
-      this.store.set('match_logs', id, proof);
+      this.store.systemWrite('match_logs', id, proof); // server-only collection: clients can neither read nor write it
       // ranked fields are the ones the client used to write (see recordMatch in game/main.js)
-      if (end !== 'timeout') this.store.set('matches', id, { season: season(ts), ta: a.t3, tb: b.t3, fm: s.cfg.fmt, a: a.uid, b: b.uid, ka: m.kits[0], kb: m.kits[1], map: m.map, stake: m.stake,
+      if (end !== 'timeout') this.store.systemWrite('matches', id, { season: season(ts), ta: a.t3, tb: b.t3, fm: s.cfg.fmt, a: a.uid, b: b.uid, ka: m.kits[0], kb: m.kits[1], map: m.map, stake: m.stake,
         w: winner, rounds: m.wins.slice(), ts, src: 'server', end, frames: s.log.length, log: hash, sim: m.id });
     } catch (e) { console.error('match record', e && e.message); return null; }
     return { id, hash };
   }
-  storedProof(id) { return this.store && typeof id === 'string' && /^srv_[0-9a-f]{16}$/.test(id) ? this.store.get('match_logs', id) : null; }
-  // server-written records are read-only for clients
-  protects(coll, id) {
-    if (coll === 'match_logs') return true;
-    if (coll !== 'matches') return false;
-    if (/^srv_/.test(String(id))) return true;
-    const d = this.store && this.store.get('matches', String(id)); return !!(d && d.src === 'server');
+  // presence rooms 'oni-<code>' are bound to the match with that code: seated players read/write, anyone else signed in reads
+  roomAccess(conn, name) {
+    const r = /^oni-([a-z0-9]{4,8})$/i.exec(String(name)); if (!r || !conn.uid) return null;
+    const s = this.sessions.get(r[1].toUpperCase()); if (!s || s.state === 'closed') return null;
+    return s.seatOfUid(conn.uid) >= 0 ? 'rw' : 'ro';
   }
+  storedProof(id) { return this.store && typeof id === 'string' && /^srv_[0-9a-f]{16}$/.test(id) ? this.store.get('match_logs', id) : null; }
   verifyStored(id, verifyProof) {
     const p = this.storedProof(id); if (!p) return { ok: false, error: 'not_found' };
     const rec = this.store.get('matches', id);

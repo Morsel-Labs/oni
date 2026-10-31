@@ -21,7 +21,7 @@
       if (!r) { localStorage.removeItem('oni-token'); await token(); ws.close(); return; }
       me = r.id; myPeer = r.peer;
       for (const [id, s] of snaps) ws.send(JSON.stringify({ t: 'sub', sid: id, coll: s.coll, q: s.q }));
-      for (const room of wantRooms) { await call({ t: 'join', room }); if (presNow.get(room)) ws.send(JSON.stringify({ t: 'pres', room, patch: presNow.get(room) })); }
+      for (const room of wantRooms) { try { await call({ t: 'join', room }); } catch (e) { continue; } if (presNow.get(room)) ws.send(JSON.stringify({ t: 'pres', room, patch: presNow.get(room) })); }
       readyRes();
       Match.resume();
     };
