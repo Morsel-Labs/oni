@@ -19,7 +19,7 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
 function json(res, code, obj) { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); }
 function body(req, max) { max = max || 1e5; return new Promise(r => { let b = ''; req.on('data', c => { b += c; if (b.length > max) req.destroy(); }); req.on('end', () => { try { r(JSON.parse(b || '{}')); } catch (e) { r({}); } }); }); }
 
-const server = http.createServer(async (req, res) => {
+async function handle(req, res) {
   const u = new URL(req.url, 'http://x');
   if (u.pathname === '/health') return json(res, 200, { ok: true, rooms: rooms.rooms.size, conns: wss.clients.size });
   if (u.pathname === '/api/geo') return json(res, 200, geo.geoOf(req));
@@ -29,9 +29,13 @@ const server = http.createServer(async (req, res) => {
   if (u.pathname === '/api/wallet' && req.method === 'POST') { const b = await body(req); const r = auth.walletLogin(store, b.token, b.wallet, b.signature); return json(res, r.error ? 401 : 200, r); }
   if (u.pathname === '/api/leaderboard') { const season = +u.searchParams.get('season') || 0; return json(res, 200, store.query('matches', { where: season ? [['season', '==', season]] : [], orderBy: ['ts', 'asc'], limit: 1000 }).map(d => d.data)); }
   // static files
-  let p = decodeURIComponent(u.pathname); if (p === '/') p = '/index.html';
+  let p; try { p = decodeURIComponent(u.pathname); } catch (e) { res.writeHead(400); return res.end('Bad request'); }
+  if (p === '/') p = '/index.html';
   const f = path.normalize(path.join(PUB, p)); if (!f.startsWith(PUB)) { res.writeHead(403); return res.end(); }
   fs.readFile(f, (err, data) => { if (err) { res.writeHead(404); return res.end('Not found'); } res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream', 'Cache-Control': p.endsWith('.html') ? 'no-cache' : 'max-age=3600' }); res.end(data); });
+}
+const server = http.createServer((req, res) => {
+  handle(req, res).catch(e => { console.error('request error', e && e.message); if (!res.headersSent) { res.writeHead(500); } res.end(); });
 });
 
 const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 300 * 1024 });
