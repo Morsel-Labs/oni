@@ -2006,6 +2006,60 @@ body.touch.menu:not(.landing):not(.vmenu) #demo-badge{left:0!important;right:0!i
   width:100%;text-align:center;font-size:8px!important;line-height:12px!important;padding:4px 8px calc(4px + env(safe-area-inset-bottom,0px))!important;box-shadow:0 -2px 0 #7A4E00!important}
 body.touch.menu:not(.landing):not(.vmenu) .panel.full.on{bottom:calc(var(--demo-h) + env(safe-area-inset-bottom,0px))!important}
 /* ==== [D] END ==== */
+/* ==== [G] UX FLOWS ==== */
+/* focus: one 8-bit ring everywhere (square, gold, offset so it reads on gold buttons too) */
+:focus-visible{outline:3px solid var(--gold)!important;outline-offset:3px!important}
+.panel:focus,.panel [tabindex="-1"]:focus,#age-gate [tabindex="-1"]:focus{outline:none!important}
+/* mode chooser: bottom sheet on phones in portrait, centred card otherwise */
+#modes,#nconf{position:fixed;inset:0;z-index:70;display:flex;align-items:flex-end;justify-content:center;background:rgba(10,5,6,.74);touch-action:manipulation}
+#modes[hidden],#nconf[hidden]{display:none}
+#modes .md-card{position:relative;width:min(560px,100%);max-height:100%;overflow:auto;background:#22100F;padding:14px 14px calc(16px + env(safe-area-inset-bottom,0px));font-family:var(--pix);
+  box-shadow:0 -3px 0 0 var(--gold),0 -6px 0 0 #0A0506;display:flex;flex-direction:column;gap:10px}
+#modes .md-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#modes h2{margin:0;font:400 16px/1 var(--pix);color:var(--gold);letter-spacing:.12em;text-shadow:0 3px 0 #000}
+#modes #md-x{width:44px;height:44px;font:400 22px/1 var(--pix);color:var(--ink);background:var(--deep);border:2px solid var(--line);box-shadow:0 3px 0 #000;cursor:pointer}
+#modes .md-free{margin:0;font:500 13px/1.4 Inter,system-ui,sans-serif;color:var(--mute)}#modes .md-free b{color:var(--ink)}
+#modes .md-tut{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 10px;background:#2E1A08;box-shadow:0 0 0 2px #7A4E00;font:500 13px/1.3 Inter,system-ui,sans-serif;color:var(--ink)}
+#modes .md-tut[hidden]{display:none}
+#modes .md-tut span{flex:1 1 100%}
+#modes .md-list .md-o:nth-child(4){grid-column:1/-1}
+#modes .md-tut button{min-height:44px;padding:0 12px;font:400 9px/1 var(--pix);color:#2A1300;background:var(--gold);border:0;box-shadow:0 3px 0 #7A4E00;cursor:pointer}
+#modes .md-tut #md-tut-no{background:transparent;color:var(--mute);box-shadow:none;text-decoration:underline}
+#modes .md-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#modes .md-o{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;min-height:64px;padding:10px 12px;text-align:left;color:var(--ink);background:var(--deep);border:2px solid var(--line);box-shadow:0 4px 0 #000;cursor:pointer}
+#modes .md-o b{font:400 11px/1.2 var(--pix);display:flex;align-items:center;gap:6px}
+#modes .md-o small{font:500 12px/1.3 Inter,system-ui,sans-serif;color:var(--mute)}
+#modes .md-o:active,#nconf button:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
+#modes .md-quick{grid-column:1/-1;min-height:76px;background:linear-gradient(180deg,#FFE14A,#FFB000);border-color:#FFE08A;color:#2A1300;box-shadow:0 5px 0 #7A4E00}
+#modes .md-quick b{font-size:15px}#modes .md-quick small{color:#4A2A00}
+#modes .md-last{font:400 7px/1 var(--pix);font-style:normal;padding:3px 4px;background:#0A0506;color:var(--gold)}
+#modes .md-sel{min-height:44px;font:600 13px/1.2 Inter,system-ui,sans-serif;color:var(--gold);background:transparent;border:0;text-decoration:underline;cursor:pointer}
+@media (orientation:landscape),(min-width:700px){
+  #modes,#nconf{align-items:center;padding:10px}
+  #modes .md-card{padding:12px 14px;box-shadow:0 -3px 0 0 var(--gold),0 3px 0 0 var(--gold),-3px 0 0 0 var(--gold),3px 0 0 0 var(--gold),0 8px 0 0 rgba(0,0,0,.5)}}
+@media (orientation:landscape) and (max-height:430px){
+  #modes .md-card{width:min(640px,100%);gap:7px}
+  #modes .md-list{grid-template-columns:1.3fr 1fr 1fr}
+  #modes .md-quick{grid-column:1;grid-row:1/span 2}
+  #modes .md-o{min-height:58px;padding:8px 10px}#modes .md-quick{min-height:58px}#modes .md-quick b{font-size:12px}
+  #modes .md-list .md-o:nth-child(4){grid-column:2/-1}
+  #modes .md-tut{padding:4px 8px;flex-wrap:nowrap}#modes .md-tut span{flex:1 1 auto}}
+/* quit confirm (second Back from the pause menu) */
+#nconf{z-index:75;align-items:center;padding:16px}
+#nconf .nc-card{display:flex;flex-direction:column;gap:10px;width:min(300px,92vw);padding:18px 16px 16px;background:#22100F;border:3px solid #0A0506;outline:2px solid var(--blood,#C1121F);box-shadow:0 6px 0 #000;font-family:var(--pix);text-align:center}
+#nconf .nc-t{font-size:14px;color:var(--gold);letter-spacing:.1em;text-shadow:0 3px 0 #000}
+#nconf .nc-n{margin:0;font:500 13px/1.4 Inter,system-ui,sans-serif;color:var(--mute)}
+#nconf button{font-family:var(--pix);font-size:11px;min-height:48px;color:var(--ink);background:var(--deep);border:2px solid var(--line);box-shadow:0 4px 0 #000;cursor:pointer}
+#nconf .nc-no{background:var(--gold);color:#2A1300;border-color:#FFE08A;box-shadow:0 4px 0 #7A4E00}
+#nconf .nc-yes{background:#3A0C0F;border-color:#C1121F}
+/* landing: the fixed demo badge leaves once the page scrolls, so it never sits on content */
+/* the chooser says "Demo: no real money moves" itself; the floating badge would sit on its header */
+body:has(#modes:not([hidden])) #demo-badge{visibility:hidden}
+body.landing.ld-scrolled #demo-badge{opacity:0;visibility:hidden;transition:opacity .2s,visibility 0s .2s}
+/* reduced motion: no decorative animation or transition anywhere */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.001ms!important;transition-delay:0s!important;scroll-behavior:auto!important}}
+/* ==== [G] END ==== */
 </style>
 </head>
 <body class="menu">
@@ -5179,7 +5233,9 @@ function calmArena(cv,p){if(!cv||!p)return cv;const g=cv.getContext('2d');const 
   for(let i=0;i<a.length;i+=4){const l=0.299*a[i]+0.587*a[i+1]+0.114*a[i+2];
     for(let k=0;k<3;k++){let v=l+(a[i+k]-l)*p.s;v=(v-96)*p.c+96;v*=p.b;if(v>215)v=215+(v-215)*0.5;a[i+k]=v<0?0:v>255?255:v;}a[i+3]=255;}
   g.putImageData(d,0,0);return cv;}
-const COMFORT={on:(()=>{try{return localStorage.getItem('oni-comfort')==='on';}catch(e){return false;}})()};
+// Comfort mode: the player's own choice wins; with no choice yet, follow the OS "reduce motion" setting.
+const COMFORT={on:(()=>{try{const v=localStorage.getItem('oni-comfort');if(v)return v==='on';}catch(e){}
+  try{return typeof matchMedia==='function'&&!!matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}})()};
 function buildAll(){[buildSummit,buildTemple,buildYomi,buildColosseum,buildBridge,buildCastle,buildHall].forEach((fn,i)=>{const c=document.createElement('canvas');c.width=W;c.height=H;G=c.getContext('2d');fn();BG[i]=c;});G=ctx;try{BGHI[1]=buildTempleHi();}catch(e){}
   const HIB={0:'buildSummitHi',2:'buildYomiHi',3:'buildColosseumHi',4:'buildBridgeHi',5:'buildCastleHi',6:'buildHallHi',7:'buildLaunchpadHi',8:'buildHelipadHi'};
   for(const k in HIB){try{if(typeof window[HIB[k]]==='function')BGHI[k]=window[HIB[k]]();}catch(e){}}
@@ -5310,12 +5366,9 @@ function setMute(v){AU.muted=v;if(AU.m)AU.m.gain.value=v?0:0.9;const mb=document
 /* ===================== INPUT ===================== */
 const held=new Set(),pressed=new Set();
 const KEYMAP={KeyA:'L',ArrowLeft:'L',KeyD:'R',ArrowRight:'R',KeyW:'U',ArrowUp:'U',Space:'U',KeyS:'D',ArrowDown:'D',KeyJ:'P',KeyK:'K',KeyL:'S',KeyI:'T',KeyQ:'T',KeyE:'B',ShiftLeft:'B',ShiftRight:'B',KeyZ:'P',KeyX:'K',KeyC:'S',KeyV:'T'};
-addEventListener('keydown',e=>{const k=KEYMAP[e.code];if(!k)return;const tag=document.activeElement&&document.activeElement.tagName;if(tag==='INPUT'||tag==='BUTTON'&&document.body.classList.contains('menu'))return;e.preventDefault();auInit();if(!held.has(k))pressed.add(k);held.add(k);});
+addEventListener('keydown',e=>{const k=KEYMAP[e.code];if(!k)return;const tag=document.activeElement&&document.activeElement.tagName;if(tag==='INPUT'||tag==='BUTTON'&&document.body.classList.contains('menu'))return;if(typeof navModal==='function'&&navModal())return;e.preventDefault();auInit();if(!held.has(k))pressed.add(k);held.add(k);});
 addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)held.delete(k);});
-addEventListener('keydown',e=>{if(e.key!=='Escape')return;
-  if(!document.body.classList.contains('menu')&&M){e.preventDefault();if(mode==='training'){$('tr-exit').click();}else $('quit').click();return;}
-  const open=[...document.querySelectorAll('.panel.on')].map(p=>p.id);
-  if(open.length&&!open.includes('p-title')&&!open.includes('p-end')&&mode==='title'){e.preventDefault();goHome();}});
+// Escape is handled by NAV (see "[G] NAV" below): closes the top overlay, pauses a fight, or goes back.
 addEventListener('blur',()=>{held.clear();padReset();});
 /* ---- Touch controls: one d-pad zone (8-way from thumb position, slide to change direction) + an action cluster
    (nearest button wins, slide between buttons). Each pointer is tracked on its own, so both thumbs work at once. ---- */
@@ -5429,7 +5482,7 @@ function camPresent(){
 }
 const PAUSE={on:false,el:null};
 function pausable(){return ['cpu','training','tourney','boss'].includes(mode);}
-function pauseBuild(){if(PAUSE.el)return PAUSE.el;const d=document.createElement('div');d.id='pause';d.hidden=true;d.setAttribute('role','dialog');d.setAttribute('aria-label','Paused');
+function pauseBuild(){if(PAUSE.el)return PAUSE.el;const d=document.createElement('div');d.id='pause';d.hidden=true;d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.setAttribute('aria-label','Paused');
   d.innerHTML='<div class="pz-card"><div class="pz-t">PAUSED</div><p class="pz-n" id="pz-n"></p><button type="button" class="pz-go" id="pz-res">Resume</button><div class="pz-row"><button type="button" id="pz-snd"></button><button type="button" id="pz-hap"></button></div><button type="button" class="pz-q" id="pz-quit">Quit match</button></div>';
   document.body.appendChild(d);PAUSE.el=d;
   d.addEventListener('pointerdown',e=>{if(e.target===d)pauseClose();});
@@ -5441,14 +5494,16 @@ function pausePaint(){$('pz-snd').textContent='Sound: '+(AU.muted?'off':'on');$(
   $('pz-hap').hidden=!document.body.classList.contains('touch')||!navigator.vibrate;
   $('pz-n').textContent=pausable()?(mode==='tourney'?'Quitting forfeits this tournament match.':''):'Online match: the fight keeps running.';}
 function pauseOpen(auto){if(!inFight()||(PAUSE.el&&!PAUSE.el.hidden))return;if(auto&&(!pausable()||!M||M.scene==='matchEnd'))return;
-  const d=pauseBuild();PAUSE.on=pausable();padReset();pausePaint();d.hidden=false;document.body.classList.add('paused');const r=$('pz-res');if(r&&!auto&&!document.body.classList.contains('touch'))r.focus();}
-function pauseClose(){PAUSE.on=false;if(PAUSE.el)PAUSE.el.hidden=true;document.body.classList.remove('paused');}
+  const d=pauseBuild();PAUSE.on=pausable();padReset();pausePaint();d.hidden=false;document.body.classList.add('paused');
+  if(typeof navOverlay==='function')navOverlay('pause',d,{close:pauseClose,back:navQuitAsk,focus:'#pz-res'});}
+function pauseClose(){PAUSE.on=false;if(PAUSE.el)PAUSE.el.hidden=true;document.body.classList.remove('paused');if(typeof navOverlayDone==='function'){navConfirmClose();navOverlayDone('pause');}}
 
 /* ===================== APP STATE + SELECT ===================== */
 let mode='title',M=null,cpuMem={hold:0,bits:0,gap:false},level=0,frameN=0,lastEv=0,endShown=false,contT=0,cpuKit='ryu';
 const $=id=>document.getElementById(id);
 function show(id){if(id==='p-title'&&typeof VIL!=='undefined'&&VIL.active){id=null;mode='village';M=null;const tb=document.getElementById('trbar');if(tb)tb.hidden=true;const q=document.getElementById('quit');if(q)q.hidden=true;}
-  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id===id));document.body.classList.toggle('menu',!!id);document.body.classList.toggle('landing',id==='p-landing');}
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id===id));document.body.classList.toggle('menu',!!id);document.body.classList.toggle('landing',id==='p-landing');
+  if(typeof navNote==='function')navNote();}
 function streak(){try{return +localStorage.getItem('oni-streak')||0;}catch(e){return 0;}}
 function setStreak(v){try{localStorage.setItem('oni-streak',String(v));}catch(e){}}
 function refreshTitle(){const s=streak();const rl=(typeof rankLine==='function')?rankLine():'';$('streak').textContent=(rl?rl+' ':'')+(s>0?`CPU streak: ${s}.`:(rl?'':'Seven fighters, four arenas. Win two rounds to take the match.'));$('quit').hidden=true;}
@@ -5474,7 +5529,7 @@ function saveOwned(){try{localStorage.setItem('oni-owned',JSON.stringify([...OWN
 async function syncOwned(){if(!DB.db||!DB.me)return;try{const d=await DB.db.collection('data/users/'+DB.me).doc('inv').get();
   if(d.exists){let add=false;(d.data().owned||[]).forEach(k=>{if(CH[k]&&!OWN.has(k)){OWN.add(k);add=true;}});if(add){try{localStorage.setItem('oni-owned',JSON.stringify([...OWN]));}catch(e){}}}}catch(e){}}
 loadOwned();
-const SEL={kit:'oni',map:1,ctx:'cpu',fmt:'bo3',opal:0,low:300};
+const SEL={kit:'oni',map:1,ctx:'cpu',fmt:'bo3',opal:0,low:0};
 const LOWSTAKES=[[0,'Free','Half season points. Up to 5 airdrop points a day.'],[100,'$1','Smallest real stake. Full points. No $ONI needed.'],[300,'$3','Full points. No $ONI needed.']];
 try{const v=+localStorage.getItem('oni-color');SEL.opal=v===1||v===4?v:0;}catch(e){}
 const myPal=k=>k==='oni'?SEL.opal:0;
@@ -5852,8 +5907,8 @@ function openSelect(ctxName){
   }
   show('p-select');$('p-select').scrollTop=0;
 }
-$('sel-back').onclick=()=>{SFX.select();goHome();};
-function startCPU(){vilPublish(true,true);auInit();SFX.select();level=diffLevel();cpuKit=FIGHTERS[Math.floor(Math.random()*3)].kit;mode='cpu';
+$('sel-back').onclick=()=>{SFX.select();navBack();};
+function startCPU(){vilPublish(true,true);auInit();SFX.select();if(!ARC.on)LS.set('oni-qf',{kit:SEL.kit,map:SEL.map});level=diffLevel();cpuKit=FIGHTERS[Math.floor(Math.random()*3)].kit;mode='cpu';
   M=mkMatch('cpu',0,[SEL.kit,cpuKit],SEL.map,Object.assign({pal:[myPal(SEL.kit),cpuKit==='oni'?1-myPal(SEL.kit):0]},FMTS[SEL.fmt]));cpuMem={hold:0,bits:0,gap:false};lastEv=0;endShown=false;show(null);$('quit').hidden=false;musicStart();}
 $('b-cpu').onclick=()=>{auInit();SFX.select();openSelect('cpu');};
 $('b-online').onclick=()=>{auInit();SFX.select();openSelect('online');};
@@ -5861,17 +5916,17 @@ $('b-help').onclick=openControls;
 $('b-profile').onclick=openProfile;
 $('b-tourney').onclick=openTourney;
 $('b-boss').onclick=openBoss;
-$('bs-back').onclick=()=>{SFX.select();goHome();};
-$('c-back').onclick=()=>{SFX.select();goHome();};
+$('bs-back').onclick=()=>{SFX.select();navBack();};
+$('c-back').onclick=()=>{SFX.select();navBack();};
 $('b-training').onclick=()=>{auInit();SFX.select();openSelect('cpu');$('sel-note').innerHTML='Pick your fighter and arena, then press <strong>Training mode</strong>.';};
-$('tn-back').onclick=()=>{SFX.select();goHome();};
+$('tn-back').onclick=()=>{SFX.select();navBack();};
 $('br-back').onclick=()=>{SFX.select();TN=null;mode='title';openTourney();};
-$('pf-back').onclick=()=>{SFX.select();PROFILE.draft=null;goHome();};
+$('pf-back').onclick=()=>{SFX.select();PROFILE.draft=null;navBack();};
 $('b-cauldron').onclick=()=>{auInit();SFX.select();openCauldrons();};
 $('b-store').onclick=()=>{auInit();SFX.select();openStore();};
-$('b-back4').onclick=()=>{SFX.select();goHome();};
+$('b-back4').onclick=()=>{SFX.select();navBack();};
 $('b-board').onclick=()=>{auInit();SFX.select();show('p-board');renderBoard();};
-$('b-back3').onclick=()=>{SFX.select();goHome();};
+$('b-back3').onclick=()=>{SFX.select();navBack();};
 $('b-back2').onclick=()=>{SFX.select();show(mode==='title'?'p-title':null);};
 $('b-cancel').onclick=()=>toTitle();
 $('quit').onclick=()=>{if(mode==='tourney'&&M){M.winner=1;M.wins=[0,M.need||2];tourneyEnd();return;}toTitle();};
@@ -6997,7 +7052,7 @@ function startDemo(){
   M=mkMatch('demo',0,['oni','oni'],1,{pal:[0,1],skins:pr});M.scene='intro';M.sceneT=0;M.f.forEach((f,i)=>{f.skin=pr[i];});lastEv=0;
 }
 function demoTick(){if(mode==='demo'&&M&&M.scene==='matchEnd'&&M.sceneT>150)startDemo();}
-function leaveLanding(){auInit();SFX.select();enterVillage();}
+function leaveLanding(){auInit();SFX.select();enterVillage();navCommit();openModes();}
 function renderLanding(){
   const ev=document.getElementById('ld-event');if(ev){ev.hidden=!EVENT;if(EVENT)ev.innerHTML=`<b>YOKAI NIGHT</b> October event: ghost fire in the village and double fun. Ends ${new Date(EVENT.until).toISOString().slice(0,10)}.`;}
   renderLive();
@@ -7066,7 +7121,7 @@ function renderHow(){
 }
 $('ld-how').onclick=()=>openHow('p-landing');
 $('b-how').onclick=()=>openHow('p-title');
-$('hw-back').onclick=()=>{SFX.select();show(HOW_BACK);};
+$('hw-back').onclick=()=>{SFX.select();navBack(()=>show(HOW_BACK));};
 
 
 /* ===================== ONI VILLAGE (playable) ===================== */
@@ -7086,7 +7141,7 @@ function enterVillage(){setTimeout(()=>{let near=null,nd=1e9;for(const z of VZ){
   if(!VIL.bg&&typeof buildVillageBG==='function')VIL.bg=buildVillageBG();
   auInit();VIL.active=true;mode='village';M=null;musicStop();
   const tb=document.getElementById('trbar');if(tb)tb.hidden=true;$('quit').hidden=true;
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));document.body.classList.remove('menu','landing');
+  show(null);
   $('vil-menu').hidden=false;refreshProfileBtn();
 }
 function classicMenu(){openSettings();}
@@ -7207,14 +7262,14 @@ function vilHud(pr){const el=document.getElementById('vact');if(!el||!el.dataset
 window.addEventListener('keydown',e=>{if(mode!=='village')return;
   if(e.code==='KeyE'){VIL.wantE=true;e.preventDefault();}
   else if(/^Digit[1-4]$/.test(e.code)){vilEmote(+e.code.slice(5)-1);}
-  else if(e.code==='KeyM'||e.code==='Escape'){classicMenu();}});
+  else if(e.code==='KeyM'&&!navModal()){classicMenu();}});
 $('vil-menu').onclick=classicMenu;
 function gfxLabel(){const b=document.getElementById('b-gfx');if(b)b.textContent='Graphics: '+(GFX.hd?'HD':'Classic');}
 $('b-comfort').onclick=()=>{COMFORT.on=!COMFORT.on;try{localStorage.setItem('oni-comfort',COMFORT.on?'on':'off');}catch(e){}$('b-comfort').textContent='Comfort: '+(COMFORT.on?'On':'Off');SFX.select();};
 $('b-comfort').textContent='Comfort: '+(COMFORT.on?'On':'Off');
 $('b-gfx').onclick=()=>{GFX.hd=!GFX.hd;try{localStorage.setItem('oni-gfx',GFX.hd?'hd':'classic');}catch(e){}gfxLabel();SFX.select();};gfxLabel();
 $('b-tut').onclick=startTutorial;$('b-arcade').onclick=()=>{if(!owns(SEL.kit))SEL.kit='oni';startArcade();};$('b-missions').onclick=openMissions;
-$('mis-back').onclick=()=>{SFX.select();goHome();};$('cl-back').onclick=()=>{SFX.select();goHome();};$('b-clans').onclick=openClans;$('ko-back').onclick=()=>{SFX.select();show('p-end');};
+$('mis-back').onclick=()=>{SFX.select();navBack();};$('cl-back').onclick=()=>{SFX.select();navBack();};$('b-clans').onclick=openClans;$('ko-back').onclick=()=>{SFX.select();show('p-end');};
 $('how-tut').onclick=startTutorial;
 $('quit').addEventListener('click',()=>{TUT.on=false;tutShow();ARC.on=false;});
 document.querySelectorAll('#vbar [data-go]').forEach(b=>b.onclick=()=>{b.blur();auInit();const k=b.dataset.go;
@@ -7281,7 +7336,7 @@ const ACH=[['first','First Blood','Win your first match',()=>STATS.wins>=1],['te
  ['slayer','Enma Slayer','Beat Enma',()=>{const b=DB.boss&&DB.me&&DB.boss.find?DB.boss.find(x=>x.id===DB.me):null;return !!(b&&b.kills>0);}],['champ','Champion','Win a TENKA tournament',()=>STATS.tenka>=1],
  ['clan','Brotherhood','Join a clan',()=>!!(myProfile()&&myProfile().clan)],['founder','Founder','Be one of the first 200 accounts',()=>isFounder()],['lord','Oni Lord','Reach the top 50',()=>{const e=myEntry();return !!(e&&e.lord);}]];
 function checkAch(){const got=LS.get('oni-ach',[]);let changed=false;for(const [id,n] of ACH.map(a=>[a[0],a[1]]))if(!got.includes(id)&&ACH.find(a=>a[0]===id)[3]()){got.push(id);changed=true;toast('Achievement unlocked: '+n);}if(changed)LS.set('oni-ach',got);return got;}
-function toast(t){const el=$('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>{el.hidden=true;},2600);}
+function toast(t){const el=$('toast');el.textContent=t;el.hidden=false;toastPlace(el);clearTimeout(toast.t);toast.t=setTimeout(()=>{el.hidden=true;},2600);}
 /* ---- clans and referrals ---- */
 const safeClan=t=>/^[A-Z0-9]{2,5}$/.test(t||'')?t:'';
 function clanOf(id){const p=id&&DB.profiles[id];return p?safeClan(p.clan):'';}
@@ -7479,9 +7534,9 @@ function drawIcon(g,name){const S=64;g.lineJoin='round';g.lineCap='round';const 
   }}
 function iconEl(name,sz){const c=document.createElement('canvas');c.width=64;c.height=64;c.className='pxi';drawIcon(c.getContext('2d'),name);if(sz)c.style.width=c.style.height=sz+'px';return c;}
 const MENU_ITEMS=[['play','Play 1v1','online'],['tenka','TENKA','tourney'],['enma','Enma','boss'],['fighters','Practice','cpu'],['missions','Missions','missions'],['clans','Clans','clans'],['shop','Market','store'],['champ','Champions','champs'],['bag','Inventory','inv'],['board','Leaderboard','board'],['cauld','Cauldrons','cauldrons'],['profile','Profile','profile'],['how','How to play','how'],['gear','Settings','settings']];
-function goMenu(k){closeScroll();auInit();({online:()=>{SFX.select();openSelect('online');},tourney:openTourney,boss:openBoss,cpu:()=>{SFX.select();openSelect('cpu');},missions:openMissions,clans:openClans,
+function goMenu(k){closeScroll();auInit();({modes:openModes,online:()=>{SFX.select();openSelect('online');},tourney:openTourney,boss:openBoss,cpu:()=>{SFX.select();openSelect('cpu');},missions:openMissions,clans:openClans,
   store:()=>{SFX.select();openStore();},finalboss:openFinalBoss,champs:()=>openChampions(),inv:openInventory,board:()=>{SFX.select();DB.tab='season';show('p-board');renderBoard();},cauldrons:openCauldrons,profile:openProfile,how:()=>openHow('p-title'),settings:()=>{classicMenu();}})[k]();}
-function buildDock(){const d=$('dock');d.innerHTML='';[['play','Play','online'],['tenka','TENKA','tourney'],['missions','Missions','missions'],['menu','Menu','menu']].forEach(([ic,l,k])=>{
+function buildDock(){const d=$('dock');d.innerHTML='';[['play','Play','modes'],['tenka','TENKA','tourney'],['missions','Missions','missions'],['menu','Menu','menu']].forEach(([ic,l,k])=>{
   const b=document.createElement('button');b.type='button';b.className='dk'+(k==='menu'?' main':'');b.setAttribute('aria-label',l);b.appendChild(iconEl(ic));const s=document.createElement('span');s.textContent=l;b.appendChild(s);
   if(k==='missions'){const dot=document.createElement('i');dot.className='badge';dot.id='dock-dot';b.appendChild(dot);}
   b.onclick=()=>{if(k==='menu')toggleScroll();else goMenu(k);};d.appendChild(b);});updateDockDot();}
@@ -7511,13 +7566,193 @@ function buildScroll(){const grid=$('scroll-grid');grid.innerHTML='';$('scroll')
       b.innerHTML=`<span class="mi"><svg viewBox="0 0 24 24" aria-hidden="true">${MENU_ICONS[key]||MENU_ICONS.how}</svg></span><span class="ml"><b>${l}</b>${MENU_SUB[key]?`<small>${MENU_SUB[key]}</small>`:''}</span>`;
       if(document.body.classList.contains('touch')){const mi=b.querySelector('.mi');mi.innerHTML='';mi.appendChild(iconEl(ic));} // phones: chunky pixel icons
       b.onclick=()=>goMenu(key);box.appendChild(b);}}}
-function toggleScroll(){const s=$('scroll');if(s.classList.contains('open'))closeScroll();else{buildScroll();s.hidden=false;document.body.classList.toggle('vmenu',true);requestAnimationFrame(()=>s.classList.add('open'));SFX.select();}}
-function closeScroll(){const s=$('scroll');s.classList.remove('open');document.body.classList.toggle('vmenu',false);setTimeout(()=>{if(!s.classList.contains('open'))s.hidden=true;},260);}
+function toggleScroll(){const s=$('scroll');if(s.classList.contains('open'))closeScroll();else{buildScroll();s.hidden=false;document.body.classList.toggle('vmenu',true);navOverlay('scroll',s,{close:closeScroll,focus:'#scroll-grid .st'});requestAnimationFrame(()=>s.classList.add('open'));SFX.select();}}
+function closeScroll(){const s=$('scroll');s.classList.remove('open');document.body.classList.toggle('vmenu',false);navOverlayDone('scroll');setTimeout(()=>{if(!s.classList.contains('open'))s.hidden=true;},260);}
 $('scroll-x').onclick=closeScroll;
 $('scroll').addEventListener('click',e=>{if(e.target&&e.target.id==='scroll')closeScroll();}); // tap the dimmed backdrop to close
 $('pcard').onclick=()=>{if(mode==='village'){auInit();openProfile();}};
-window.addEventListener('keydown',e=>{if(e.code==='Tab'&&mode==='village'){e.preventDefault();toggleScroll();}else if(e.code==='Escape'&&!$('scroll').hidden){closeScroll();}});
+// Tab opens the menu from the open village only (inside panels and dialogs Tab moves focus as usual); Escape is NAV's.
+window.addEventListener('keydown',e=>{if(e.code==='Tab'&&mode==='village'&&!navModal()&&!document.querySelector('.panel.on')&&$('scroll').hidden){e.preventDefault();toggleScroll();}});
 buildDock();renderPCard();setInterval(()=>{if(mode==='village')renderPCard();},4000);
+
+/* ===================== [G] NAV: history router, overlays, dialogs, focus =====================
+   One place for "where am I and how do I get back":
+   - Screens. A screen key is the visible panel id ('p-select:cpu' / 'p-select:online' for the select screen), 'village',
+     'p-landing' or 'fight'. show() calls navNote() after every change; navFlush() (one microtask later, so a burst of
+     show() calls lands as one step) mirrors the result into the History API: push for a new screen, back() when the
+     target is the entry just behind us (UI "Back" buttons), go(-n) to the village hub, replace when leaving a transient
+     screen (fight, end of match, waiting rooms) so Back never lands on a screen that cannot be rebuilt.
+   - Overlays (pause, village menu, mode chooser, quit confirm) are stacked on top of the screen. Each one is its own
+     history entry, so Android/browser Back closes the top-most one. Closing one from the UI walks history back over it.
+   - Back during a fight opens the pause menu (the app stays); Back again asks to quit; Back on that closes the question.
+   - Deep links: #market, #tenka, #play ... open on load (after the 18+ gate).
+   - Dialog a11y: aria-modal, initial focus, Tab trapped inside, Escape, focus restored to the opener on close.
+   The landing page is the first entry, so Back from there leaves the app normally. */
+var NAV={on:typeof history!=='undefined'&&!!history.pushState&&typeof location!=='undefined'&&typeof addEventListener==='function',
+  stack:[],cur:0,expect:0,again:false,pend:false,mode:'auto',ov:[],kbd:false,deep:null,et:0,lastK:null};
+const NAV_TRANSIENT=['fight','p-end','p-wait','p-stake','p-ko','p-lobby'];
+// panels that own their exit: Back presses their own leave/cancel button
+const NAV_LEAVE={'p-wait':'b-cancel','p-stake':'b-decline','p-lobby':'lo-back','p-bracket':'br-back','p-ko':'ko-back'};
+const NAV_ROUTES={ // key: [hash, open]
+  'p-landing':['',()=>toLanding()],village:['village',()=>goHome()],
+  'p-select:cpu':['practice',()=>openSelect('cpu')],'p-select:online':['online',()=>openSelect('online')],
+  'p-store':['market',()=>openStore()],'p-tourney':['tenka',()=>openTourney()],'p-boss':['enma',()=>openBoss()],
+  'p-missions':['missions',()=>openMissions()],'p-clans':['clans',()=>openClans()],'p-profile':['profile',()=>openProfile()],
+  'p-champs':['champions',()=>openChampions()],'p-inv':['inventory',()=>openInventory()],'p-cauldron':['cauldrons',()=>openCauldrons()],
+  'p-board':['leaderboard',()=>{DB.tab=DB.tab||'season';show('p-board');renderBoard();}],'p-how':['how',()=>openHow(HOW_BACK)],
+  'p-settings':['settings',()=>openSettings()],'p-legal':['legal',()=>openLegal()],help:['controls',()=>openControls()],
+  'p-finalboss':['finalboss',()=>openFinalBoss()],'p-title':['',()=>show('p-title')]};
+function navKey(){const p=document.querySelector&&document.querySelector('.panel.on');
+  if(p)return p.id==='p-select'?'p-select:'+(SEL.ctx==='online'?'online':'cpu'):p.id;
+  if(M&&FIGHT_MODES.includes(mode))return 'fight';return mode==='village'?'village':'p-landing';}
+function navRestorable(k){return !!k&&!NAV_TRANSIENT.includes(k)&&(!!NAV_ROUTES[k]||k==='p-bracket'&&typeof TN!=='undefined'&&!!TN);}
+function navUrl(k){const r=NAV_ROUTES[k];const h=r&&r[0]?'#'+r[0]:'';return location.pathname+location.search+h;}
+function navSame(a,b){return !!a&&!!b&&a.k===b.k&&a.o.join()===b.o.join();}
+function navHist(push,e){if(!NAV.on)return;const st={oni:1,n:NAV.cur,k:e.k,o:e.o.slice()};const fn=push?'pushState':'replaceState';
+  try{history[fn](st,'',navUrl(e.k));}catch(_){try{history[fn](st,'');}catch(__){NAV.on=false;}}}
+function navPush(e){NAV.cur++;NAV.stack.length=NAV.cur;NAV.stack[NAV.cur]=e;navHist(true,e);}
+function navReplace(e){NAV.stack[NAV.cur]=e;navHist(false,e);}
+function navGo(n){NAV.expect++;NAV.again=true;clearTimeout(NAV.et);
+  NAV.et=setTimeout(()=>{if(!NAV.expect)return;NAV.expect=0;const s=history.state;if(s&&s.oni)NAV.cur=s.n;if(NAV.again){NAV.again=false;navFlush();}},700);
+  history.go(n);}
+function navNote(){if(!NAV||!NAV.on||NAV.pend)return;NAV.pend=true;Promise.resolve().then(navFlush);}
+function navCommit(){if(NAV&&NAV.on)navFlush();} // flush now, so the next show() becomes its own history step
+function navFlush(){NAV.pend=false;if(!NAV.on)return;if(NAV.expect){NAV.again=true;return;}
+  const k=navKey(),o=NAV.ov.map(x=>x.id),D={k,o};
+  if(k!==NAV.lastK){NAV.lastK=k;navFocusScreen(k);}
+  if(NAV.mode==='replace'){NAV.mode='auto';navReplace(D);return;}
+  const C=NAV.stack[NAV.cur]||{k:null,o:[]};if(navSame(C,D))return;
+  let keep=0;if(C.k===k)while(keep<C.o.length&&keep<o.length&&C.o[keep]===o[keep])keep++;
+  if(C.o.length>keep){ // overlays closed from the UI: walk history back over their entries first
+    const n=C.o.length-keep;if(NAV.cur-n>=0&&NAV.stack[NAV.cur-n]){navGo(-n);return;}navReplace({k:C.k,o:C.o.slice(0,keep)});}
+  const B=NAV.stack[NAV.cur];
+  if(B.k!==k){
+    const P=NAV.stack[NAV.cur-1];
+    if(P&&P.k===k&&!P.o.length){navGo(-1);return;} // returning to the screen we came from
+    if(k==='village')for(let j=NAV.cur-2;j>=0;j--){const E=NAV.stack[j];if(E&&E.k==='village'&&!E.o.length){navGo(j-NAV.cur);return;}} // hub
+    if(B.k==null||NAV_TRANSIENT.includes(B.k))navReplace({k,o:[]});else navPush({k,o:[]});}
+  for(let i=NAV.stack[NAV.cur].o.length;i<o.length;i++)navPush({k,o:o.slice(0,i+1)});}
+function navPop(e){const st=e.state&&e.state.oni?e.state:null;
+  if(NAV.expect){NAV.expect--;if(st){NAV.cur=st.n;if(!NAV.stack[st.n])NAV.stack[st.n]={k:st.k,o:st.o||[]};}
+    if(!NAV.expect){clearTimeout(NAV.et);if(NAV.again){NAV.again=false;navFlush();}}return;}
+  if(!st){ // the user typed a #hash: a new entry with no state
+    NAV.cur++;NAV.stack.length=NAV.cur;NAV.stack[NAV.cur]={k:null,o:[]};navCloseAll();
+    const r=Object.keys(NAV_ROUTES).find(k=>NAV_ROUTES[k][0]&&'#'+NAV_ROUTES[k][0]===location.hash);
+    if(r&&!navModal()){navLeaveFight();NAV_ROUTES[r][1]();}NAV.mode='replace';navNote();return;}
+  const dir=st.n<NAV.cur?-1:1;NAV.cur=st.n;if(!NAV.stack[st.n])NAV.stack[st.n]={k:st.k,o:st.o||[]};
+  if(document.getElementById('age-gate')){NAV.mode='replace';navNote();return;} // the gate stays until answered
+  const top=NAV.ov[NAV.ov.length-1];
+  if(top){(dir<0&&top.back?top.back:top.close)();navNote();return;} // close (or step) the top-most overlay
+  if(inFight()){pauseOpen(false);navNote();return;}                   // Back in a fight pauses, never leaves
+  const cur=navKey();
+  if(NAV_LEAVE[cur]){const b=$(NAV_LEAVE[cur]);if(b&&!b.disabled)b.click();NAV.mode='replace';navNote();return;}
+  if(cur==='p-end'){if(mode==='tourney'){tourneyEnd();NAV.mode='replace';navNote();return;}
+    if(['host','guest','spectate'].includes(mode)){toTitle();NAV.mode='replace';navNote();return;}
+    ARC.on=false;contT=0;TUT.on=false;tutShow();M=null;mode=VIL.active?'village':'title';musicStop();}
+  if(!navRestorable(st.k)||st.k===cur){history.go(dir);return;} // nothing to rebuild here: keep going the same way
+  NAV.stack[NAV.cur]={k:st.k,o:[]};NAV.mode='replace';NAV_ROUTES[st.k]?NAV_ROUTES[st.k][1]():show(st.k);navNote();}
+// Back from a UI button: the previous history entry when it is a real screen, else the village
+function navBack(fallback){if(NAV&&NAV.on&&!NAV.expect){const P=NAV.stack[NAV.cur-1];if(P&&!P.o.length&&navRestorable(P.k)&&P.k!==navKey()&&P.k!=='p-landing'){history.back();return;}}
+  (fallback||goHome)();}
+function navLeaveFight(){if(M&&FIGHT_MODES.includes(mode)){pauseClose();ARC.on=false;TUT.on=false;tutShow();M=null;mode=VIL.active?'village':'title';musicStop();}}
+function toLanding(){navCloseAll();VIL.active=false;$('vil-menu').hidden=true;try{vilPublish(true,true);}catch(e){}musicStop();startDemo();show('p-landing');}
+function navDeep(h){const want=decodeURIComponent(h||'').toLowerCase();if(!want)return;
+  if(want==='play'){enterVillage();navCommit();openModes();return;}
+  const k=Object.keys(NAV_ROUTES).find(k=>NAV_ROUTES[k][0]===want);if(!k||k==='p-landing'||k==='p-title')return;
+  enterVillage();navCommit();if(k!=='village')NAV_ROUTES[k][1]();}
+function navAfterGate(){const h=NAV.deep;NAV.deep=null;if(h)navDeep(h);}
+function navInit(){if(!NAV.on)return;
+  const h=location.hash.slice(1),s=history.state&&history.state.oni?history.state:null;
+  NAV.cur=s?s.n:0;NAV.stack=[];NAV.stack[NAV.cur]={k:'p-landing',o:[]};NAV.lastK=navKey();navReplace(NAV.stack[NAV.cur]);
+  addEventListener('popstate',navPop);
+  if(h&&!/^how-/.test(h)){if(document.getElementById('age-gate'))NAV.deep=h;else navDeep(h);}}
+
+/* ---- overlays + dialog focus ---- */
+function navOverlay(id,el,o){if(NAV.ov.some(x=>x.id===id))return;
+  NAV.ov.push({id,el,close:o.close,back:o.back,prev:document.activeElement});
+  el.setAttribute('aria-modal','true');if(!el.getAttribute('role'))el.setAttribute('role','dialog');dlgFocus(el,o.focus);navNote();}
+function navOverlayDone(id){if(!NAV)return;const i=NAV.ov.findIndex(x=>x.id===id);if(i<0)return;const e=NAV.ov.splice(i,1)[0];dlgRestore(e.prev);navNote();}
+function navCloseAll(){for(let i=NAV.ov.length-1;i>=0;i--){const x=NAV.ov[i];if(x)x.close();}}
+function dlgTop(){const ag=document.getElementById('age-gate');if(ag&&ag.style.display!=='none')return ag;
+  const t=NAV&&NAV.ov[NAV.ov.length-1];return t?t.el:null;}
+function navModal(){return !!dlgTop();}
+function dlgFocusables(el){return [...el.querySelectorAll('button,a[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')]
+  .filter(x=>!x.disabled&&x.getClientRects().length&&getComputedStyle(x).visibility!=='hidden');}
+function dlgFocus(el,sel){const go=()=>{const t=(sel&&el.querySelector(sel))||dlgFocusables(el)[0];
+  if(t&&t.focus){if(t.tabIndex<0&&!t.hasAttribute('tabindex'))t.setAttribute('tabindex','-1');t.focus({preventScroll:true});}};
+  go();if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>{if(dlgTop()===el&&!el.contains(document.activeElement))go();});}
+function dlgRestore(prev){const t=dlgTop();if(t){if(!t.contains(document.activeElement))dlgFocus(t);return;}
+  if(prev&&prev.isConnected&&prev.focus&&prev.getClientRects().length&&prev!==document.body)prev.focus({preventScroll:true});}
+// keyboard users get focus moved onto a newly shown panel; touch users are left alone
+function navFocusScreen(k){if(!NAV.kbd||navModal())return;const p=document.querySelector('.panel.on');if(!p||p.contains(document.activeElement))return;
+  const t=p.querySelector('h1,h2,h3,[class*="back"],button');if(t){if(!t.matches('button,a[href]'))t.setAttribute('tabindex','-1');t.focus({preventScroll:true});}}
+if(NAV.on){
+  addEventListener('pointerdown',()=>{NAV.kbd=false;},true);
+  addEventListener('keydown',e=>{
+    if(e.key==='Tab'){NAV.kbd=true;const el=dlgTop();if(!el)return;e.preventDefault();e.stopPropagation();const f=dlgFocusables(el);if(!f.length)return;
+      const i=f.indexOf(document.activeElement);const n=e.shiftKey?(i<=0?f.length-1:i-1):(i<0||i===f.length-1?0:i+1);f[n].focus();return;}
+    if(e.key!=='Escape')return;
+    if(document.getElementById('age-gate')&&dlgTop()){e.preventDefault();return;} // the 18+ question must be answered
+    const top=NAV.ov[NAV.ov.length-1];if(top){e.preventDefault();e.stopPropagation();top.close();return;}
+    if(inFight()){e.preventDefault();pauseOpen(false);return;}
+    const k=navKey();if(NAV_LEAVE[k]){e.preventDefault();const b=$(NAV_LEAVE[k]);if(b&&!b.disabled)b.click();return;}
+    if(k!=='village'&&k!=='p-landing'&&k!=='p-end'){e.preventDefault();navBack();}},true);
+  document.addEventListener('focusin',e=>{const el=dlgTop();if(el&&!el.contains(e.target))dlgFocus(el);});}
+
+/* ---- quit confirm (second Back from pause) ---- */
+function navQuitAsk(){const d=$('nconf')||(()=>{const c=document.createElement('div');c.id='nconf';c.hidden=true;c.setAttribute('role','alertdialog');c.setAttribute('aria-labelledby','nc-t');c.setAttribute('aria-describedby','nc-n');
+    c.innerHTML='<div class="nc-card"><div class="nc-t" id="nc-t">QUIT MATCH?</div><p class="nc-n" id="nc-n"></p><button type="button" class="nc-no" id="nc-no">Keep fighting</button><button type="button" class="nc-yes" id="nc-yes">Quit</button></div>';
+    document.body.appendChild(c);c.addEventListener('pointerdown',e=>{if(e.target===c)navConfirmClose();});
+    $('nc-no').onclick=()=>navConfirmClose();$('nc-yes').onclick=()=>{navConfirmClose();pauseClose();$('quit').click();};return c;})();
+  if(!d.hidden)return;
+  $('nc-n').textContent=mode==='tourney'?'Quitting forfeits this tournament match.':['host','guest'].includes(mode)?'Leaving an online match counts as a loss.':mode==='spectate'?'Stop watching this match.':'This match will not count.';
+  d.hidden=false;navOverlay('nconf',d,{close:navConfirmClose,focus:'#nc-no'});}
+function navConfirmClose(){const d=document.getElementById('nconf');if(!d||d.hidden)return;d.hidden=true;navOverlayDone('nconf');}
+
+/* ---- Play: the mode chooser. Quick fight vs CPU is the default; nothing staked is ever preselected ---- */
+const MODES=[['quick','Quick fight','vs CPU · free'],['online','Online 1v1','Play a friend with a code · free by default'],['arcade','Arcade','6 fighters, then Enma · free'],['training','Training','Practise moves, no timer · free']];
+function modesBuild(){let d=$('modes');if(d)return d;d=document.createElement('div');d.id='modes';d.hidden=true;d.setAttribute('role','dialog');d.setAttribute('aria-labelledby','md-t');
+  d.innerHTML='<div class="md-card"><div class="md-head"><h2 id="md-t">PLAY</h2><button type="button" id="md-x" aria-label="Close. Back to the village">&times;</button></div>'+
+    '<p class="md-free"><b>Free to play.</b> Demo: no real money moves.</p>'+
+    '<div class="md-tut" id="md-tut" hidden><span>New here? Learn the moves in a minute.</span><button type="button" id="md-tut-go">Tutorial</button><button type="button" id="md-tut-no" aria-label="Hide the tutorial tip">Not now</button></div>'+
+    '<div class="md-list" id="md-list"></div><button type="button" class="md-sel" id="md-sel">Choose fighter, arena and difficulty</button></div>';
+  document.body.appendChild(d);
+  d.addEventListener('pointerdown',e=>{if(e.target===d)closeModes();});
+  $('md-x').onclick=()=>closeModes();
+  $('md-sel').onclick=()=>{closeModes();SFX.select();openSelect('cpu');};
+  $('md-tut-go').onclick=()=>{LS.set('oni-tut-offer',1);closeModes();startTutorial();};
+  $('md-tut-no').onclick=()=>{LS.set('oni-tut-offer',1);SFX.select();$('md-tut').hidden=true;dlgFocus(d,'#md-list .md-o');};
+  return d;}
+function quickSetup(){const q=LS.get('oni-qf',{})||{};
+  if(q.kit&&CH[q.kit]&&owns(q.kit))SEL.kit=q.kit;else if(!owns(SEL.kit))SEL.kit='oni';
+  if(q.map!=null&&MAPS[q.map]&&!MAPS[q.map].tourney)SEL.map=q.map;else if(!MAPS[SEL.map]||MAPS[SEL.map].tourney)SEL.map=1;
+  SEL.ctx='cpu';SEL.fmt=FMTS[SEL.fmt]?SEL.fmt:'bo3';SEL.diff=SEL.diff||LS.get('oni-diff','auto');}
+function quickFight(){quickSetup();startCPU();}
+function modesGo(m){LS.set('oni-play-last',m);closeModes();
+  if(m==='quick')quickFight();
+  else if(m==='online'){SFX.select();SEL.map=0;SEL.low=0;if(!owns(SEL.kit))SEL.kit='oni';openSelect('online');}
+  else if(m==='arcade'){quickSetup();startArcade();}
+  else if(m==='training'){quickSetup();startTraining();}}
+function openModes(){auInit();if(navModal())return;const d=modesBuild();const seen=LS.get('oni-play-last',null),last=seen||'quick';quickSetup();
+  const dl=(DIFFS.find(x=>x[0]===SEL.diff)||DIFFS[4])[1];
+  $('md-list').innerHTML=MODES.map(([k,t,s])=>`<button type="button" class="md-o${k==='quick'?' md-quick':''}" data-m="${k}"><b>${t}${k===seen?'<i class="md-last">LAST</i>':''}</b><small>${k==='quick'?esc(CH[SEL.kit].name)+' · '+esc(MAPS[SEL.map].name)+' · '+dl+' · free':s}</small></button>`).join('');
+  $('md-list').querySelectorAll('.md-o').forEach(b=>b.onclick=()=>modesGo(b.dataset.m));
+  $('md-tut').hidden=!!LS.get('oni-tut-offer',0)||!!(STATS&&STATS.tut);
+  d.hidden=false;SFX.select();navOverlay('modes',d,{close:closeModes,focus:'#md-list [data-m="'+last+'"]'});}
+function closeModes(){const d=document.getElementById('modes');if(!d||d.hidden)return;d.hidden=true;navOverlayDone('modes');}
+
+/* ---- toast placement: never on top of the end-of-match buttons (or the HUD) ---- */
+function toastPlace(el){el.style.top='';el.style.bottom='';if(typeof document.querySelector!=='function')return;const end=document.querySelector('#p-end.on');if(!end||!el.getBoundingClientRect)return;
+  const vis=x=>{const r=x.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(x).visibility!=='hidden'?r:null;};
+  const R=[...document.querySelectorAll('#p-end.on button,#p-end.on a,#p-end.on .note,#hud button,#b-profile')].map(vis).filter(Boolean);
+  const t=el.getBoundingClientRect(),h=t.height,vh=innerHeight,cand=[t.top];R.forEach(r=>{cand.push(r.bottom+8,r.top-8-h);});cand.push(8);
+  const hit=y=>R.some(r=>r.left<t.right&&r.right>t.left&&r.top<y+h&&r.bottom>y);
+  const ok=cand.filter(y=>y>=4&&y+h<=vh-24&&!hit(y)).sort((a,b)=>Math.abs(a-t.top)-Math.abs(b-t.top));
+  if(ok.length){el.style.top=Math.round(ok[0])+'px';el.style.bottom='auto';}}
+
+/* ---- landing: the fixed demo badge steps aside once the page scrolls (the footer still says demo) ---- */
+(function(){const l=document.getElementById('p-landing');if(!l||!l.addEventListener)return;
+  l.addEventListener('scroll',()=>{document.body.classList.toggle('ld-scrolled',l.scrollTop>24);},{passive:true});})();
 
 
 
@@ -7560,12 +7795,12 @@ const KYC_PAYOUT=60000,KYC_YEAR=200000;
 function kycCheck(cents){const y=new Date().getFullYear();const k=LS.get('oni-kyc-year',{});const tot=(k.y===y?k.c|0:0)+cents;LS.set('oni-kyc-year',{y,c:tot});
   if(cents>=KYC_PAYOUT||tot>=KYC_YEAR)return ' To withdraw this, an identity check (KYC) will be needed. Demo: no real money moves.';return '';}
 // 18+ gate on the first visit
-function ageGate(){if(LS.get('oni-age',0)===1)return;const d=document.createElement('div');d.id='age-gate';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');
-  d.innerHTML=`<div class="ag-box"><div class="ag-k">鬼</div><h2>Welcome to ONI</h2><p>ONI includes matches and tournaments with entry fees. You must be <b>18 or older</b> to play.</p><div class="ag-b"><button type="button" id="ag-yes">I am 18 or older</button><button type="button" id="ag-no">I am under 18</button></div><small>By entering you accept the <a href="#" data-lg="terms">Terms</a> and <a href="#" data-lg="privacy">Privacy Policy</a>.</small></div>`;
-  document.body.appendChild(d);
-  d.querySelector('#ag-yes').onclick=()=>{LS.set('oni-age',1);d.remove();};
-  d.querySelector('#ag-no').onclick=()=>{d.querySelector('.ag-box').innerHTML='<div class="ag-k">鬼</div><h2>Sorry</h2><p>ONI is only for players 18 and over. Come back when you are old enough.</p>';};
-  d.querySelectorAll('[data-lg]').forEach(a=>a.onclick=e=>{e.preventDefault();d.style.display='none';openLegal(a.dataset.lg);const back=$('lg-back').onclick;$('lg-back').onclick=()=>{d.style.display='';show('p-landing');$('lg-back').onclick=back;};});}
+function ageGate(){if(LS.get('oni-age',0)===1)return;const d=document.createElement('div');d.id='age-gate';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.setAttribute('aria-labelledby','ag-t');
+  d.innerHTML=`<div class="ag-box"><div class="ag-k">鬼</div><h2 id="ag-t">Welcome to ONI</h2><p>ONI includes matches and tournaments with entry fees. You must be <b>18 or older</b> to play.</p><div class="ag-b"><button type="button" id="ag-yes">I am 18 or older</button><button type="button" id="ag-no">I am under 18</button></div><small>By entering you accept the <a href="#" data-lg="terms">Terms</a> and <a href="#" data-lg="privacy">Privacy Policy</a>.</small></div>`;
+  document.body.appendChild(d);dlgFocus(d,'#ag-yes');
+  d.querySelector('#ag-yes').onclick=()=>{LS.set('oni-age',1);d.remove();dlgRestore(null);navAfterGate();};
+  d.querySelector('#ag-no').onclick=()=>{d.querySelector('.ag-box').innerHTML='<div class="ag-k">鬼</div><h2 id="ag-t" tabindex="-1">Sorry</h2><p>ONI is only for players 18 and over. Come back when you are old enough.</p>';dlgFocus(d,'#ag-t');};
+  d.querySelectorAll('[data-lg]').forEach(a=>a.onclick=e=>{e.preventDefault();d.style.display='none';openLegal(a.dataset.lg);const back=$('lg-back').onclick;$('lg-back').onclick=()=>{d.style.display='';show('p-landing');$('lg-back').onclick=back;dlgFocus(d,'#ag-yes');};});}
 
 /* ===================== LEGAL (drafts, to be reviewed by a lawyer before real money) ===================== */
 const LEGAL_CO='[Company name] LLC',LEGAL_MAIL='legal@theonicurse.xyz',LEGAL_DATE='October 2, 2026';
@@ -7636,11 +7871,11 @@ function renderSettings(){const el=$('set-body');const lim=(t,d,id,opts,cur)=>`<
   $('st-lstake').onchange=e=>{setLimits({stake:+e.target.value});toast('Limit per match saved');};$('st-ldaily').onchange=e=>{setLimits({daily:+e.target.value});toast('Daily limit saved');};
   $('st-break').onclick=()=>{if(limits().breakUntil>Date.now()){toast('Your break ends on '+new Date(limits().breakUntil).toLocaleString());return;}const d=prompt('Pause paid modes for how many days? (1, 7 or 30)','7');const n=[1,7,30].includes(+d)?+d:0;if(!n)return;setLimits({breakUntil:Date.now()+n*864e5});toast('Paid modes paused for '+n+' day'+(n>1?'s':''));renderSettings();};
   $('st-terms').onclick=()=>openLegal('terms');$('st-priv').onclick=()=>openLegal('privacy');$('st-resp').onclick=()=>openLegal('play');$('st-fees').onclick=()=>openLegal('fees');$('st-token').onclick=()=>openLegal('token');$('st-contact').onclick=()=>openLegal('contact');}
-$('set-back').onclick=()=>{SFX.select();goHome();};
+$('set-back').onclick=()=>{SFX.select();navBack();};
 
 /* ===================== INVENTORY (its own page) ===================== */
 function openInventory(){auInit();SFX.select();renderMine($('inv-body'));show('p-inv');$('p-inv').scrollTop=0;}
-$('inv-back').onclick=()=>{SFX.select();goHome();};
+$('inv-back').onclick=()=>{SFX.select();navBack();};
 $('inv-market').onclick=()=>{openStore();};
 /* ===================== CHAMPIONS (look only) ===================== */
 const CHAMP={sel:'oni'};
@@ -7653,12 +7888,12 @@ function renderChampions(){const k=CHAMP.sel,fd=FIGHTERS.find(x=>x.kit===k)||FIG
   showcase($('ch-cv'),k,[1,0,2,3][t]);
   const grid=$('ch-grid');grid.innerHTML='';FIGHTERS.forEach(f2=>{const b=document.createElement('button');b.type='button';b.className='ch-card'+(f2.kit===k?' on':'')+(owns(f2.kit)?'':' locked');b.setAttribute('aria-pressed',f2.kit===k?'true':'false');
     b.appendChild(posterEl(f2.kit,myPal(f2.kit)));b.insertAdjacentHTML('beforeend',`<span>${esc(CH[f2.kit].name)}</span>`);b.onclick=()=>{CHAMP.sel=f2.kit;SFX.select();renderChampions();$('p-champs').scrollTop=0;};grid.appendChild(b);});}
-$('ch-back').onclick=()=>{SFX.select();goHome();};
+$('ch-back').onclick=()=>{SFX.select();navBack();};
 
 /* ===================== PvE FINAL BOSS (its own mode, coming soon) ===================== */
 function openFinalBoss(){auInit();SFX.select();const cv=$('fb-cv');const g=cv.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,cv.width,cv.height);g.imageSmoothingEnabled=false;
   g.fillStyle='#2A2430';g.fillRect(0,0,cv.width,cv.height);g.setTransform(2,0,0,2,0,0);if(typeof vilPrison==='function')vilPrison(g,-872,-226,usd(0),0);g.setTransform(1,0,0,1,0,0);show('p-finalboss');$('p-finalboss').scrollTop=0;}
-$('fb-back').onclick=()=>{SFX.select();goHome();};
+$('fb-back').onclick=()=>{SFX.select();navBack();};
 
 /* ===================== EVENTS -> SOUND + FX ===================== */
 function processEvents(m){
@@ -7781,7 +8016,7 @@ function loop(now){if(DEMO_BADGE){const fight=!!M&&mode!=='title'&&mode!=='villa
   if(document.body.classList.contains('menu')&&$('p-cauldron').classList.contains('on'))renderCauldrons();
   if(document.body.classList.contains('menu')){tickShowcases();tickTrophy();}
 }
-function boot(){fightUiInit();ageGate();geoCheck();buildAll();refreshTitle();refreshProfileBtn();renderLanding();startDemo();show('p-landing');requestAnimationFrame(loop);netInit();dbInit();}
+function boot(){fightUiInit();ageGate();geoCheck();buildAll();refreshTitle();refreshProfileBtn();renderLanding();startDemo();show('p-landing');requestAnimationFrame(loop);netInit();dbInit();navInit();}
 if(document.fonts&&document.fonts.load){Promise.race([document.fonts.load('8px "Press Start 2P"'),new Promise(r=>setTimeout(r,1500))]).then(boot,boot);}else boot();
 
 </script>
