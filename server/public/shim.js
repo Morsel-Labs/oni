@@ -85,7 +85,8 @@
         async peek(code) { await ready; return call({ t: 'mp', code }); },
         async join(code, opts) { await ready; opts = Object.assign({ as: 'seat' }, opts); code = String(code).toUpperCase();
           if (!cur || cur.code !== code) { frame = 0; unacked = []; }
-          const info = await call(msg(code, opts)); cur = { code, as: opts.as, opts }; return info; },
+          const prev = cur; cur = { code, as: opts.as, opts }; // set first: the server may send status before the reply
+          try { return await call(msg(code, opts)); } catch (e) { cur = prev && prev.code === code ? prev : null; throw e; } },
         sendInput(mask) { if (!cur || cur.as === 'watch') return; unacked.push(mask & 255); frame++; if (unacked.length > 240) unacked.shift(); if (!flushQ) { flushQ = true; queueMicrotask(flush); } },
         onState(cb) { stateCbs.add(cb); return () => stateCbs.delete(cb); },
         onStatus(cb) { statusCbs.add(cb); return () => statusCbs.delete(cb); },

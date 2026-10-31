@@ -1536,7 +1536,7 @@ async function netJoinAuth(code,asHost){
   }
   let info;try{info=await NET.mt.peek(code);}catch(e){NET.auth=false;$('sel-note').textContent=e&&e.code==='not_found'?'No match found with code '+code+'. Check the code and that the host is still waiting.':'Could not open the match. Try again in a moment.';return false;}
   const mine=info.seats.findIndex(x=>x&&DB.me&&x.uid===DB.me);
-  if(mine>=0){try{await NET.mt.join(code,{as:mine?'seat':'host',kit:NET.kit,pal:SEL.opal,t3:hasT3()?1:0});}catch(e){}return true;} // back to my own seat
+  if(mine>=0){try{const st=await NET.mt.join(code,{as:mine?'seat':'host',kit:NET.kit,pal:SEL.opal,t3:hasT3()?1:0});if(st.st==='live')netAuthStart(st);else if(st.st==='waiting'){mode='hostwait';$('mycode').textContent=code;show('p-wait');}}catch(e){}return true;} // back to my own seat
   if(info.seats[1]||info.st!=='waiting')return netWatch(code);
   reviewStake(info.stake,info.map,info.fmt,info.seats[0]&&info.seats[0].kit);return true;
 }
@@ -1546,7 +1546,7 @@ async function netWatch(code){
 }
 async function netAcceptAuth(){
   SFX.coin();$('b-accept').disabled=true;
-  try{await NET.mt.join(NET.code,{as:'seat',kit:NET.kit,pal:SEL.opal,t3:hasT3()?1:0});}
+  try{const info=await NET.mt.join(NET.code,{as:'seat',kit:NET.kit,pal:SEL.opal,t3:hasT3()?1:0});if(info&&info.st==='live'&&info.seat>=0)netAuthStart(info);}
   catch(e){$('b-accept').disabled=false;if(e&&e.code==='seat_taken'){netWatch(NET.code);return;}netLost(e&&e.code==='not_found'?'The host left the match.':'Could not join the match.');return;}
   $('b-accept').disabled=false;
 }
