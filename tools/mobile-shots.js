@@ -62,7 +62,8 @@ async function audit(p) {
       const onTop = top && (top === el || el.contains(top));
       if (r.bottom < 0 || r.top > vh) continue;
       if (onTop && (r.width < 40 || r.height < 40)) out.small.push(label(el) + ` ${r.width | 0}x${r.height | 0}`);
-      if (r.right > vw + 2 || r.left < -2) out.offscreen.push(label(el));
+      const inScroller = (() => { for (let a = el.parentElement; a; a = a.parentElement) { const ox = getComputedStyle(a).overflowX; if ((ox === 'auto' || ox === 'scroll') && a.scrollWidth > a.clientWidth) return true; } return false; })();
+      if (!inScroller && (r.right > vw + 2 || r.left < -2)) out.offscreen.push(label(el));
     }
     // overlap with fight canvas when in a fight
     const inFight = typeof M !== 'undefined' && M && !document.body.classList.contains('menu');

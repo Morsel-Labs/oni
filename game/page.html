@@ -2000,6 +2000,11 @@ body.touch #tut{border:0;border-radius:0;padding:10px 12px 14px;gap:6px;
 
 /* ==== [D] DESIGN SYSTEM: 8-bit modern tokens, buttons, typography ==== */
 
+/* Demo badge on phones in full-screen menus: a slim footer strip; panels end above it so it never covers content */
+body.touch.menu:not(.landing):not(.vmenu){--demo-h:20px}
+body.touch.menu:not(.landing):not(.vmenu) #demo-badge{left:0!important;right:0!important;bottom:0!important;top:auto!important;transform:none!important;
+  width:100%;text-align:center;font-size:8px!important;line-height:12px!important;padding:4px 8px calc(4px + env(safe-area-inset-bottom,0px))!important;box-shadow:0 -2px 0 #7A4E00!important}
+body.touch.menu:not(.landing):not(.vmenu) .panel.full.on{bottom:calc(var(--demo-h) + env(safe-area-inset-bottom,0px))!important}
 /* ==== [D] END ==== */
 </style>
 </head>

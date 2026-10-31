@@ -298,3 +298,30 @@ Source: `/tmp/oni-base/report.json` via `node tools/audit/scorecard.js`, plus vi
 2. Escrow: bind `player_b` / co-sign joins, multisig or HSM for the referee, close accounts, external audit.
 3. Split `main.js` into modules with esbuild (minify, sourcemaps); remove dead "2.0/3.0" layers.
 4. Service worker for offline shell and fonts; a CSP and security headers.
+
+## 12. After the mobile overhaul (branch `mobile-overhaul`)
+
+Re-run on the merged branch: `npm run build && node tools/mobile-shots.js /tmp/after && node tools/audit/scorecard.js /tmp/after/report.json`
+(the baseline uses `BASELINE=1` to apply the by-eye verdicts made before the overhaul).
+
+| | Before | After |
+| --- | --- | --- |
+| Scorecard (88 screen x device checks) | 38 PASS, 34 WARN, 16 FAIL | **76 PASS, 12 WARN, 0 FAIL** |
+| Sub-40px touch targets on screen (all screens, 4 devices) | 300+ | **0** |
+| Controls over the fight canvas, landscape (fight / tutorial) | 8-11 / 19-22 | **0 / 0** |
+| Fight canvas share, portrait 390x844 / 360x640 | 26% / 32% | **42% / 46%** (plus camera zoom on touch: fighters up to 1.7x larger) |
+| Horizontal overflow / off-screen controls | store, champions, how | **none** (tab strips scroll inside their own container) |
+| Page errors across all runs | 0 | 0 |
+| `npm test` | 12/12, 28/28 | 12/12, 28/28 |
+
+The 12 remaining WARN are the fight, tutorial and end screens, which the scorecard marks WARN by rule (fight screens are judged by eye); all of them measure 0 small targets and 0 controls over the arena.
+
+Fixed from the P0/P1 list:
+- Server crash on malformed URL (`server/src/server.js`): now 400, and any handler error returns 500 instead of killing the process.
+- Render-blocking Google Fonts: the stylesheet now loads asynchronously.
+- Fight layout (portrait and landscape), d-pad sliding and diagonals, multi-touch, haptics (toggle in Settings and in the pause menu), pause menu with auto-pause on hide/blur (offline modes), 44px HUD buttons, training toolbar no longer covers the tutorial text.
+- Menus: 44px targets, sticky compact headers, sticky Fight CTA on the select screen, readable text (pixel font >= 9px, body text in Inter).
+- Village, landing and age gate: no overlaps, portrait tray for the dock and player card, menu as a bottom sheet / modal, 8-bit age gate.
+- Demo badge: a footer strip in phone menus that panels end above, so it never covers content.
+
+Still open (need product decisions, not done here): server write rules and read access (forgeable records, public inventories), rate limits, host-authoritative online 1v1 and `/api/verify` trust model, `join_match` griefing in the escrow, guest presence rate at 120 Hz, Android Back button / history handling, first-fight tap count (dock "Play" opens staked 1v1).

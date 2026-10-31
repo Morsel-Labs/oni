@@ -7,7 +7,8 @@
 const fs = require('fs');
 const r = JSON.parse(fs.readFileSync(process.argv[2] || '/tmp/oni-shots/report.json', 'utf8'));
 const SCREENS = ['landing', 'village', 'vmenu', 'select', 'fight', 'training', 'tutorial', 'end', 'store', 'profile', 'tourney', 'boss', 'how', 'missions', 'clans', 'settings', 'inventory', 'champions', 'cauldron', 'controls', 'legal', 'board'];
-const MANUAL = { 'village:P': 'WARN (dock covers card + hint)', 'village:Ps': 'WARN (dock covers card + hint)', 'village:L': 'WARN (player card over pad)', 'village:Ls': 'WARN (player card over pad)',
+// MANUAL verdicts were made by eye on the pre-overhaul baseline; apply them only with BASELINE=1.
+const MANUAL = process.env.BASELINE !== '1' ? {} : { 'village:P': 'WARN (dock covers card + hint)', 'village:Ps': 'WARN (dock covers card + hint)', 'village:L': 'WARN (player card over pad)', 'village:Ls': 'WARN (player card over pad)',
   'tutorial:L': 'FAIL (toolbar hides lesson text)', 'tutorial:Ls': 'FAIL (toolbar hides lesson text)' };
 const tot = { PASS: 0, WARN: 0, FAIL: 0 };
 const lines = ['| Screen | P 390x844 | L 844x390 | Ps 360x640 | Ls 640x360 |', '|---|---|---|---|---|'];
