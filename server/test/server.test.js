@@ -12,7 +12,7 @@ test.before(async () => {
   const port = await freePort();
   BASE = 'http://127.0.0.1:' + port;
   const DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'oni-e2e-'));
-  proc = spawn(process.execPath, [path.join(__dirname, '..', 'src', 'server.js')], { env: Object.assign({}, process.env, { PORT: String(port), DATA_DIR, WS_MAX_PER_IP: '8', TRUST_PROXY: '' }), stdio: ['ignore', 'pipe', 'pipe'] });
+  proc = spawn(process.execPath, [path.join(__dirname, '..', 'src', 'server.js')], { env: Object.assign({}, process.env, { PORT: String(port), DATA_DIR, WS_MAX_PER_IP: '8', TRUST_PROXY: '', CLIENT_MATCHES: '1' }), stdio: ['ignore', 'pipe', 'pipe'] });
   proc.stderr.on('data', d => process.stderr.write(d));
   await new Promise((ok, no) => { proc.stdout.on('data', d => { if (/ONI server on/.test(d)) ok(); }); proc.on('exit', c => no(new Error('server exited ' + c))); });
 });

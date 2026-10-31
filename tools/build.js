@@ -4,6 +4,8 @@ const G = p => path.join(__dirname, '..', p);
 const read = p => fs.readFileSync(G(p), 'utf8');
 const ART = ['game/art/hi.js', 'game/art/cauldhi.js', 'game/art/vil.js', 'game/art/avatars.js', 'game/art/arenas_hi.js', 'game/art/gods2.js'].map(read).join('\n');
 const html = read('game/page.html').split('%%ART%%').join(ART).split('%%SIM%%').join(read('game/sim.js')).split('%%MAIN%%').join(read('game/main.js'));
+// the server runs the same fight code: copy it so game/sim.js and server/src/sim.js can never drift (checked by server/test/sim_sync.js)
+fs.copyFileSync(G('game/sim.js'), G('server/src/sim.js'));
 fs.mkdirSync(G('dist'), { recursive: true });
 fs.writeFileSync(G('dist/oni-fighter.html'), html);
 const i = html.indexOf('<script');
