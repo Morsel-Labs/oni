@@ -4,6 +4,7 @@
   "description": "ONI 1v1 SOL escrow: Anchor program, JS client, devnet demo (unaudited)",
   "scripts": {
     "test": "cargo test -p oni_escrow && node tests/client.test.js",
+    "test:client": "node tests/client.test.js",
     "demo:devnet": "node scripts/devnet-demo.js"
   },
   "license": "ISC",

@@ -325,3 +325,22 @@ Fixed from the P0/P1 list:
 - Demo badge: a footer strip in phone menus that panels end above, so it never covers content.
 
 Still open (need product decisions, not done here): server write rules and read access (forgeable records, public inventories), rate limits, host-authoritative online 1v1 and `/api/verify` trust model, `join_match` griefing in the escrow, guest presence rate at 120 Hz, Android Back button / history handling, first-fight tap count (dock "Play" opens staked 1v1).
+
+## 13. Hardening pass (branch `hardening`)
+
+All P0/P1 items from section 2 are now addressed. Verified with `npm run check -- --mobile` (all 11 steps pass), `node tools/ux-flows.js` (54/54), `node tools/net-e2e.js` (9/9, two browsers) and `tools/audit/server-probe.js` (11/11).
+
+| Area | Before | After |
+| --- | --- | --- |
+| Server data rules | any guest could forge matches, airdrop days, boss kills; read private inventories | per-collection schemas (`server/src/schema.js`), owner-only private reads, sign-in required, create-only matches |
+| Abuse limits | none (200/200 guest accounts in a burst) | per-IP / per-socket / per-user token buckets, guest 5/min, nonce map capped, 413/405, security headers + CSP |
+| Online 1v1 | host runs the fight and writes the log it is verified against | server runs the fight at 60 Hz from both players' inputs and writes the result + replay log itself (`server/src/match.js`); seats bound to accounts; private rooms bound to their match |
+| Guest presence at 120 Hz | 120 msg/s, silently dropped | at most 30/s, only on change |
+| sim.js drift | two hand-kept copies | build copies it; tests and CI fail on drift |
+| Escrow | anyone could join and lock stakes; config init front-run; fee wallets could block settle; settle/refund race | named opponent or referee co-sign; upgrade-authority init; fees accrue in config; exact settle/refund windows; accounts closed; 16 Rust tests |
+| CI | none | GitHub Actions: web (build freshness, sim sync, tests, server tests), escrow (cargo test, client checks), mobile (88+ Playwright checks) |
+| Android Back | left the app mid-fight | history router: closes overlays, returns to the previous screen, pauses fights, deep links (`#market`, `#tenka`, `#play`) |
+| First fight | 5 taps + scrolling; dock Play opened staked 1v1 | 2 taps: Play → Quick fight; tutorial offered once; online starts on a free stake |
+| Accessibility | age gate did not trap focus; reduced motion ignored | focus trap/restore and Escape in all dialogs; reduced motion turns Comfort on and stops decorative animation; every button has a name |
+
+Still open: client-side prediction for online play (latency = round trip + ~60 ms); bot detection; some match fields (`ta`/`tb`, `pal`, kit ownership) are client-claimed; escrow is unaudited and not deployed, and no SBF/validator tests were run; the game server is not deployed (theonicurse.xyz is a static Vercel upload, see `vercel.json`).

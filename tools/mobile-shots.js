@@ -23,8 +23,9 @@ fs.mkdirSync(OUT, { recursive: true });
 // Screens: name -> async (page) => void. Each starts from a fresh, age-verified page.
 const SCREENS = {
   landing: async p => { await p.evaluate(() => show('p-landing')); },
-  village: async p => { await p.click('#ld-play', { force: true }).catch(() => {}); await p.waitForTimeout(1500); },
-  vmenu: async p => { await p.click('#ld-play', { force: true }).catch(() => {}); await p.waitForTimeout(1200);
+  village: async p => { await p.click('#ld-play', { force: true }).catch(() => {}); await p.waitForTimeout(600); await p.click('#md-x', { force: true }).catch(() => {}); await p.waitForTimeout(900); },
+  modes: async p => { await p.click('#ld-play', { force: true }).catch(() => {}); await p.waitForTimeout(900); },
+  vmenu: async p => { await p.click('#ld-play', { force: true }).catch(() => {}); await p.waitForTimeout(600); await p.click('#md-x', { force: true }).catch(() => {}); await p.waitForTimeout(600);
     await p.evaluate(() => { const b = [...document.querySelectorAll('#dock button')].find(b => /menu/i.test(b.textContent)); b && b.click(); }); },
   select: async p => { await p.evaluate(() => openSelect('cpu')); },
   fight: async p => { await p.evaluate(() => { openSelect('cpu'); startCPU(); }); await p.waitForTimeout(5500); },
