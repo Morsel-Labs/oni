@@ -1278,9 +1278,10 @@ function renderStore(){
   const side=$('mk-side');
   if(!CATS.find(c=>c[0]===STORE.cat))STORE.cat='fighters';
   side.innerHTML=holderCard()+
-    `<details class="mk-more" open><summary>Filters</summary><div class="mk-h">Rarity</div>`+['free','common','rare','epic','leg','ltd','myth','god'].map(r=>`<label class="mk-chk"><input type="checkbox" data-rar="${r}" ${STORE.rar.has(r)?'checked':''}><i style="background:${RAR_COL[r]}"></i>${RAR_LABEL[r]}</label>`).join('')+
+    `<details class="mk-more"${STORE.fopen||(innerWidth>820&&innerHeight>500)?' open':''}><summary>Filters${STORE.rar.size||STORE.avail!=='all'||STORE.trade?' (on)':''}</summary><div class="mk-h">Rarity</div>`+['free','common','rare','epic','leg','ltd','myth','god'].map(r=>`<label class="mk-chk"><input type="checkbox" data-rar="${r}" ${STORE.rar.has(r)?'checked':''}><i style="background:${RAR_COL[r]}"></i>${RAR_LABEL[r]}</label>`).join('')+
     `<div class="mk-h">Status</div>`+[['all','All'],['buy','Buy now'],['owned','Owned'],['soon','Coming soon'],['earned','Earned only']].map(([k,l])=>`<label class="mk-chk"><input type="radio" name="mkav" data-av="${k}" ${STORE.avail===k?'checked':''}>${l}</label>`).join('')+
     `<label class="mk-chk tg"><input type="checkbox" id="mk-trade" ${STORE.trade?'checked':''}>Tradeable only</label></details>`;
+  {const dm=side.querySelector('.mk-more');if(dm)dm.ontoggle=()=>{if(innerWidth<=820||innerHeight<=500)STORE.fopen=dm.open;};}
   side.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{STORE.cat=b.dataset.cat;renderStore();});
   side.querySelectorAll('[data-rar]').forEach(c=>c.onchange=()=>{c.checked?STORE.rar.add(c.dataset.rar):STORE.rar.delete(c.dataset.rar);renderStore();});
   side.querySelectorAll('[data-av]').forEach(c=>c.onchange=()=>{STORE.avail=c.dataset.av;renderStore();});
