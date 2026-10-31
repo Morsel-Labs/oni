@@ -2053,6 +2053,8 @@ body.touch.menu:not(.landing):not(.vmenu) .panel.full.on{bottom:calc(var(--demo-
 #nconf .nc-no{background:var(--gold);color:#2A1300;border-color:#FFE08A;box-shadow:0 4px 0 #7A4E00}
 #nconf .nc-yes{background:#3A0C0F;border-color:#C1121F}
 /* landing: the fixed demo badge leaves once the page scrolls, so it never sits on content */
+/* the chooser says "Demo: no real money moves" itself; the floating badge would sit on its header */
+body:has(#modes:not([hidden])) #demo-badge{visibility:hidden}
 body.landing.ld-scrolled #demo-badge{opacity:0;visibility:hidden;transition:opacity .2s,visibility 0s .2s}
 /* reduced motion: no decorative animation or transition anywhere */
 @media (prefers-reduced-motion:reduce){
