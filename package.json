@@ -6,7 +6,11 @@
   "scripts": {
     "build": "node tools/build.js",
     "test": "node tests/mech.js && node tests/flow.js",
-    "server": "cd server && npm install && npm start"
+    "server": "cd server && npm install && npm start",
+    "check": "node tools/check.js",
+    "check:sim": "node tools/check-sim-sync.js"
   },
-  "devDependencies": { "@napi-rs/canvas": "^0.1.53" }
+  "devDependencies": {
+    "@napi-rs/canvas": "^0.1.53"
+  }
 }
