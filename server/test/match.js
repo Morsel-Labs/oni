@@ -32,7 +32,8 @@ class Client {
     if (m.t === 'mx') this.status.push(m);
   }
   feed(m) { // keep a few frames ahead of what the server consumed, like a 60 Hz client would
-    const st = S.unpack(m.s), want = m.c + 4, b = [];
+    if (this.frame - (m.c + 1) >= 3) return; // batch, so a 4x-speed test stays under the 120 msg/s flood guard
+    const st = S.unpack(m.s), want = m.c + 8, b = [];
     const f0 = this.frame;
     while (this.frame <= want && b.length < 32) { b.push(this.script(st, this.frame)); this.frame++; }
     if (b.length) this.send({ t: 'mi', f: f0, b });
@@ -98,8 +99,7 @@ async function main() {
     check(await C.callErr({ t: 'mr' }) === 'not_seated', 'spectator cannot ready up');
     // kick-start input streams (the scripts then follow snapshots)
     A.send({ t: 'mi', f: 0, b: [0] }); A.frame = 1; B.send({ t: 'mi', f: 0, b: [0] }); B.frame = 1;
-    const dbg = setInterval(() => { const s = A.snaps[A.snaps.length - 1]; if (process.env.DBG && s) { const u = S.unpack(s.s); console.log('dbg', s.s.q, u.scene, u.timer, u.f.map(f => [f.x, f.hp, f.st]), 'a', s.a, 'c', s.c, 'frame', A.frame, A.snaps.length); } }, 1000);
-    const over = await until(() => A.last('over'), 60000, 'match over'); clearInterval(dbg);
+    const over = await until(() => A.last('over'), 60000, 'match over');
     await sleep(150);
     check(over.res && over.res.end === 'ko' && over.res.w === 0, 'server ran the match to a K.O. win for seat 0');
     check(over.res.rounds[0] === 1 && over.res.frames > 300, 'result carries rounds and frame count');
