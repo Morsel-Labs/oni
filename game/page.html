@@ -1369,6 +1369,11 @@ body.touch.fight #tut small{font-size:7px}body.touch.fight #tut b{font-size:10px
 }
 body.touch.fight:not(.tr-open) #trbar{display:none!important}
 body.touch.fight.paused #pad{pointer-events:none}
+@media (orientation:portrait) and (min-height:780px) and (min-width:380px){
+  body.touch:not(.menu) #pad{--stk:min(45vw,184px);--b:min(19vw,74px);--g:12px;--rise:20px;--bh:52px}
+  body.touch:not(.menu) #pad .ab i{width:28px;height:28px}
+  body.touch:not(.menu) #pad .ab small,body.touch:not(.menu) #pad .blk small{font-size:8px}
+}
 /* ==== [A] END ==== */
 
 
