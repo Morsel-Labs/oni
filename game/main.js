@@ -2320,6 +2320,9 @@ function renderLanding(){
     ['clans','Clans','Win $ONI every week',openClans],['shop','Market','SOL, or $ONI for -20%',()=>openStore()],['missions','Missions','Daily rewards, chests, streaks',openMissions]];
   const fe=$('ld-feats');fe.innerHTML='';F.forEach(([ic,b,s,go])=>{const d=document.createElement('button');d.type='button';d.className='ld-feat2';const ib=document.createElement('span');ib.className='ld-ib';ib.appendChild(iconEl(ic));d.appendChild(ib);
     d.insertAdjacentHTML('beforeend',`<b>${b}</b><small>${s}</small>`);d.onclick=()=>{auInit();enterVillage();go();};fe.appendChild(d);});
+  {const hero=document.querySelector&&document.querySelector('#p-landing .ld-hero'),bot=hero&&hero.querySelector('.ld-bot');
+    if(hero&&bot&&!hero.querySelector('.ld-fan')){const fan=document.createElement('div');fan.className='ld-fan';fan.setAttribute('aria-hidden','true'); // hero art: a fanned hand of fighter cards
+      ['kitsune','oni','tengu'].forEach((k,i)=>{const c=document.createElement('span');c.className='ld-card c'+i;c.appendChild(posterEl(k,0));fan.appendChild(c);});hero.insertBefore(fan,bot);}}
   const r=$('ld-roster');r.innerHTML='';
   FIGHTERS.forEach(fd=>{const d=document.createElement('button');d.type='button';d.className='ld-f2';d.appendChild(posterEl(fd.kit,0));d.insertAdjacentHTML('beforeend',`<span>${esc(CH[fd.kit].name)}</span>`);d.onclick=()=>{auInit();enterVillage();openChampions(fd.kit);};r.appendChild(d);});
 }
@@ -2486,25 +2489,32 @@ function renderVillage(){
     for(let k=0;k<16;k++){const wx=(k*173)%VW,wy=240+(k*97)%420;const sx=wx-cx,sy=wy-cy+Math.sin((VIL.t+k*30)*0.05)*3;if(sx<-10||sx>490||sy<-10||sy>280)continue;
       g.fillStyle='rgba(120,200,255,.25)';g.beginPath();g.arc(sx,sy,6,0,6.28);g.fill();g.fillStyle=k%2?'#9BD8FF':'#C49BFF';g.fillRect(Math.round(sx)-2,Math.round(sy)-3,4,5);g.fillStyle='#FFFFFF';g.fillRect(Math.round(sx)-1,Math.round(sy)-2,2,2);}
     g.font='7px "Press Start 2P"';g.textAlign='center';g.fillStyle='rgba(10,5,6,.85)';g.fillRect(170,6,140,14);g.fillStyle='#C49BFF';g.fillText('YOKAI NIGHT EVENT',240,14);}
-  // top-left: village and players online
-  g.fillStyle='rgba(10,5,6,.85)';g.fillRect(6,6,104,26);g.textAlign='left';g.font='8px "Press Start 2P"';g.fillStyle='#2EC4B6';g.fillText('ONI VILLAGE',12,14);g.font='7px "Press Start 2P"';g.fillStyle='#C9A9A2';g.fillText(online+' online',12,25);
+  // top-left: village and players online. Phones: portrait drops the minimap (the canvas is small and the
+  // HUD lives in the tray below it), landscape gets a compact minimap so the corners stay clear for the pad.
+  const touch=document.body.classList.contains('touch'),port=touch&&innerHeight>innerWidth;VIL.online=online;
+  if(port){g.font='9px "Press Start 2P"';const ot=online+' online',ow=g.measureText(ot).width+22;g.fillStyle='rgba(10,5,6,.82)';g.fillRect(4,4,ow,16);g.fillStyle='#2EE88A';g.fillRect(9,10,4,4);g.textAlign='left';g.fillStyle='#F3E9E4';g.fillText(ot,17,13);}
+  else{g.fillStyle='rgba(10,5,6,.85)';g.fillRect(6,6,104,26);g.textAlign='left';g.font='8px "Press Start 2P"';g.fillStyle='#2EC4B6';g.fillText('ONI VILLAGE',12,14);g.font='7px "Press Start 2P"';g.fillStyle='#C9A9A2';g.fillText(online+' online',12,25);}
   // minimap
-  const mmx=6,mmy=36;
-  if(VIL.bg){g.fillStyle='rgba(10,5,6,.88)';g.fillRect(mmx,mmy,98,66);g.drawImage(VIL.bg,0,0,VW*2,VH*2,mmx+2,mmy+2,94,62);
-    const mx=x=>mmx+2+x/VW*94,my=y=>mmy+2+y/VH*62;for(const e of ents){g.fillStyle=e.me?'#2EC4B6':'#F3E9E4';g.fillRect(Math.round(mx(e.x))-1,Math.round(my(e.y))-1,3,3);}
-    g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=1;g.strokeRect(mx(cx)+0.5,my(cy)+0.5,480/VW*94,270/VH*62);}
-  // prompt
-  const pr=VIL.prompt;const touch=document.body.classList.contains('touch');
-  if(pr){g.font='8px "Press Start 2P"';const key=touch?'ATK':'E';const tw=g.measureText(pr.text).width;const kw=g.measureText(key).width+8;const w=tw+kw+22;const x0=240-w/2,y0=236;
+  const mmx=6,mmy=36,mmw=touch?70:94,mmh=touch?44:62;
+  if(VIL.bg&&!port){g.fillStyle='rgba(10,5,6,.88)';g.fillRect(mmx,mmy,mmw+4,mmh+4);g.drawImage(VIL.bg,0,0,VW*2,VH*2,mmx+2,mmy+2,mmw,mmh);
+    const mx=x=>mmx+2+x/VW*mmw,my=y=>mmy+2+y/VH*mmh;for(const e of ents){g.fillStyle=e.me?'#2EC4B6':'#F3E9E4';g.fillRect(Math.round(mx(e.x))-1,Math.round(my(e.y))-1,3,3);}
+    g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=1;g.strokeRect(mx(cx)+0.5,my(cy)+0.5,480/VW*mmw,270/VH*mmh);}
+  // prompt: phones get a tappable DOM chip (#vact) instead of canvas text
+  const pr=VIL.prompt;if(touch)vilHud(pr);
+  if(pr&&!touch){g.font='8px "Press Start 2P"';const key=touch?'ATK':'E';const tw=g.measureText(pr.text).width;const kw=g.measureText(key).width+8;const w=tw+kw+22;const x0=240-w/2,y0=236;
     g.fillStyle='rgba(10,5,6,.92)';g.fillRect(x0,y0,w,22);g.fillStyle=pr.kind==='accept'?'#FF6A3C':'#FFB000';g.fillRect(x0,y0,w,2);
     g.fillStyle='#F3E9E4';g.fillRect(x0+6,y0+5,kw,13);g.fillStyle='#1A0506';g.textAlign='center';g.fillText(key,x0+6+kw/2,y0+12);g.fillStyle='#F3E9E4';g.textAlign='left';g.fillText(pr.text,x0+kw+14,y0+12);}
   if(VIL.incoming){g.font='8px "Press Start 2P"';const t=peerName(VIL.incoming.from)+' challenges you to a free 1v1!';const w=g.measureText(t).width+20;g.fillStyle='rgba(90,10,14,.92)';g.fillRect(240-w/2,40,w,20);g.fillStyle='#FFE08A';g.textAlign='center';g.fillText(t,240,50);}
-  if(VIL.toastT>0&&VIL.toast){g.font='7px "Press Start 2P"';const w=g.measureText(VIL.toast).width+16;g.fillStyle='rgba(10,5,6,.9)';g.fillRect(240-w/2,210,w,16);g.fillStyle='#F3E9E4';g.textAlign='center';g.fillText(VIL.toast,240,218);}
-  // help line
-  g.font='7px "Press Start 2P"';g.textAlign='right';g.fillStyle='rgba(243,233,228,.75)';
-  g.fillText(touch?'PAD: walk   ATTACK: enter   KICK: emote':'WASD: walk   E: enter   1-4: emotes   Tab: menu',474,264);
+  if(VIL.toastT>0&&VIL.toast){g.font=port?'9px "Press Start 2P"':'7px "Press Start 2P"';const w=g.measureText(VIL.toast).width+16,ty=touch?66:210;g.fillStyle='rgba(10,5,6,.9)';g.fillRect(240-w/2,ty,w,port?18:16);g.fillStyle='#F3E9E4';g.textAlign='center';g.fillText(VIL.toast,240,ty+(port?9:8));}
+  // help line (keyboard only; phones show the hint chips in #vact)
+  if(!touch){g.font='7px "Press Start 2P"';g.textAlign='right';g.fillStyle='rgba(243,233,228,.75)';g.fillText('WASD: walk   E: enter   1-4: emotes   Tab: menu',474,264);}
   g.setTransform(3,0,0,3,0,0);
 }
+// Phone context bar: the action you can take right now as a big tappable chip, or button hints when idle.
+function vilHud(pr){const el=document.getElementById('vact');if(!el||!el.dataset)return;const k=pr?pr.kind+'|'+pr.text:'-';if(el.dataset.k===k)return;el.dataset.k=k;el.className=pr?'go':'idle';
+  if(pr){el.innerHTML=`<button type="button" class="va-go${pr.kind==='accept'?' hot':''}"><i class="va-k">ATK</i><span>${esc(pr.text)}</span><b aria-hidden="true">&#9654;</b></button>`;
+    el.firstChild.onclick=()=>{VIL.wantE=true;};}
+  else el.innerHTML='<span class="va-h"><i class="va-k mv">&#10021;</i>Walk</span><span class="va-h"><i class="va-k">ATK</i>Enter</span><span class="va-h"><i class="va-k kk">KICK</i>Emote</span>';}
 window.addEventListener('keydown',e=>{if(mode!=='village')return;
   if(e.code==='KeyE'){VIL.wantE=true;e.preventDefault();}
   else if(/^Digit[1-4]$/.test(e.code)){vilEmote(+e.code.slice(5)-1);}
@@ -2728,7 +2738,7 @@ function awardXP(n,why){const before=levelOf(myXP()).L;STATS.xp=myXP()+n;LS.set(
 function renderPCard(){const el=document.getElementById('pcard');if(!el)return;const p=myProfile();const lv=levelOf(myXP());const st=DB.me?statsOf(DB.me):{pnl:0};
   const bal=10000+(st.pnl||0);
   el.innerHTML=`<div class="pc-top"><b>${p?esc(p.name):'Guest'}</b><span class="lv">Lv ${lv.L}</span></div><div class="xpb"><i style="width:${Math.round(lv.cur/lv.need*100)}%"></i></div>`+
-    `<div class="pc-bal"><span>Balance</span><b>${p?usd(bal):'-'}</b>${p?'<small>demo</small>':'<small>connect wallet</small>'}</div>`;}
+    `<div class="pc-bal"><span>Balance</span><b>${p?usd(bal):'-'}</b>${p?'<small>demo</small>':'<small>connect wallet</small>'}</div><span class="pc-go" aria-hidden="true">&#9654;</span>`;}
 
 /* ===================== DOCK + SCROLL MENU ===================== */
 const ICONS={ // 16x16 pixel icons: rows of palette letters
@@ -2810,10 +2820,13 @@ function buildScroll(){const grid=$('scroll-grid');grid.innerHTML='';$('scroll')
     const box=document.createElement('div');box.className='mg mg-'+title.toLowerCase();grid.appendChild(box);
     for(let k=0;k<n&&i<MENU_ITEMS.length;k++,i++){const [ic,l,key]=MENU_ITEMS[i];const b=document.createElement('button');b.type='button';b.className='st';b.dataset.k=key;
       b.innerHTML=`<span class="mi"><svg viewBox="0 0 24 24" aria-hidden="true">${MENU_ICONS[key]||MENU_ICONS.how}</svg></span><span class="ml"><b>${l}</b>${MENU_SUB[key]?`<small>${MENU_SUB[key]}</small>`:''}</span>`;
+      if(document.body.classList.contains('touch')){const mi=b.querySelector('.mi');mi.innerHTML='';mi.appendChild(iconEl(ic));} // phones: chunky pixel icons
       b.onclick=()=>goMenu(key);box.appendChild(b);}}}
-function toggleScroll(){const s=$('scroll');if(s.classList.contains('open'))closeScroll();else{buildScroll();s.hidden=false;requestAnimationFrame(()=>s.classList.add('open'));SFX.select();}}
-function closeScroll(){const s=$('scroll');s.classList.remove('open');setTimeout(()=>{if(!s.classList.contains('open'))s.hidden=true;},260);}
+function toggleScroll(){const s=$('scroll');if(s.classList.contains('open'))closeScroll();else{buildScroll();s.hidden=false;document.body.classList.toggle('vmenu',true);requestAnimationFrame(()=>s.classList.add('open'));SFX.select();}}
+function closeScroll(){const s=$('scroll');s.classList.remove('open');document.body.classList.toggle('vmenu',false);setTimeout(()=>{if(!s.classList.contains('open'))s.hidden=true;},260);}
 $('scroll-x').onclick=closeScroll;
+$('scroll').addEventListener('click',e=>{if(e.target&&e.target.id==='scroll')closeScroll();}); // tap the dimmed backdrop to close
+$('pcard').onclick=()=>{if(mode==='village'){auInit();openProfile();}};
 window.addEventListener('keydown',e=>{if(e.code==='Tab'&&mode==='village'){e.preventDefault();toggleScroll();}else if(e.code==='Escape'&&!$('scroll').hidden){closeScroll();}});
 buildDock();renderPCard();setInterval(()=>{if(mode==='village')renderPCard();},4000);
 
