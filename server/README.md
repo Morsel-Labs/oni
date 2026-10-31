@@ -78,6 +78,26 @@ crontab -e
 - Σύνδεση wallet από το UI του παιχνιδιού.
 - Escrow στο Solana για τα stakes σε SOL (το preview είναι στο `oni-contract-preview`, unaudited, όχι ακόμα σε devnet).
 
+## Security
+
+Every client write is checked on the server; the client protocol (`public/shim.js`) is unchanged.
+
+**Rules** (`src/rules.js`, `src/schema.js`)
+- Reads and subscriptions need an authenticated socket (`hello`). Public collections: `profiles`, `practice`, `tickets`, `boss`, `matches`, `grants`. `data/users/{id}/…` is readable and writable by that user only. Queries: `==` filters only, at most 1000 docs.
+- `profiles`: own doc; name `^[A-Za-z0-9_]{3,16}$` and unique (case-insensitive); allow-listed keys; `admin`/`role`/`rating`-style keys rejected; `created` and `ref` owned by the server; images ≤ 48 KB data URLs; `xp`/medals grow in bounded steps.
+- `tickets`: at most one new day per write, and only today (±1 day); missions only for today, ≤ 3 per day.
+- `boss`: counters only grow; `kills`/`paid`/`jacks` by 1 per write; kills ≥ 5 s apart; `best` ≤ 50; `jackOut` bounded by the jar.
+- `practice`: CPU streak grows by 1 per write, writes ≥ 5 s apart.
+- `matches`: create-only (no overwrite, no delete); writer must be `a` or `b`, both real accounts; stake must be one the arena offers; current season; `ts` within 10 min.
+- `grants`: only uids in `ONI_OWNERS`.
+- Server code writes without client rules via `store.systemWrite(coll, id, data)` or `rules.write(store, rules.SYSTEM, …)`. Set `rules.options.clientMatches = false` once the server records every match itself.
+
+**Limits** (`src/http.js`, `src/dbapi.js`, `src/ratelimit.js`): token buckets per IP for HTTP (all routes 30/s burst 120; guest 5/min burst 10; nonce/wallet 10/min burst 20; verify 6/min), per socket for messages (120/s burst 240), per user for writes (5/s burst 40; matches 1 per 20 s), 16 sockets per IP, 32 subscriptions per socket. Bodies over the route cap get 413, wrong methods 405. Wallet nonces expire after 5 min, are pruned every minute and capped at 10 000. Tokens are looked up by SHA-256 and compared in constant time; they are never logged. Responses carry CSP (inline scripts allowed by hash, Google Fonts), `X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors 'none'`.
+
+**Env**: `TRUST_PROXY` (number of proxies that append to X-Forwarded-For; `1` behind Caddy, set in docker-compose; unset = header ignored), `ONI_OWNERS` (comma list of uids allowed to write `grants`), `WS_ORIGINS` (optional comma list of allowed Origins), and overrides `HTTP_RATE`, `HTTP_BURST`, `GUEST_PER_MIN`, `GUEST_BURST`, `WALLET_PER_MIN`, `WALLET_BURST`, `VERIFY_PER_MIN`, `VERIFY_BURST`, `WS_MSG_RATE`, `WS_MSG_BURST`, `WS_MAX_PER_IP`, `WS_MAX_SUBS`, `WRITE_RATE`, `WRITE_BURST`, `MAX_NONCES`.
+
+Tests: `npm test`. Not covered here: room joins (`rooms.js`, match service).
+
 ## Ασφάλεια αγώνων και περιοχές
 - **`/api/verify`** (POST `{proof}`): ο server ξαναπαίζει κάθε αγώνα με πόνταρισμα από τα πλήκτρα (ίδιος κώδικας μάχης, `src/sim.js`) και επιβεβαιώνει τον νικητή. Μόνο επιβεβαιωμένοι αγώνες πρέπει να πληρώνονται. Τεστ: `node test/verify.js`.
 - **`/api/geo`**: χώρα και περιοχή από τα headers του Cloudflare (`CF-IPCountry`, και `CF-Region-Code` με Managed Transform). Οι αποκλεισμένες περιοχές για paid modes μπαίνουν στη μεταβλητή **`PAID_BLOCKED`** (π.χ. `PAID_BLOCKED=XX,US-AB`), όπως τις ορίσει ο δικηγόρος. Το free play μένει ανοιχτό παντού.

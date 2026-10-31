@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "start": "node src/server.js",
-    "test": "node test/verify.js"
+    "test": "node --test test/schema.test.js test/units.test.js test/server.test.js && node test/verify.js"
   },
   "engines": {
     "node": ">=20"
