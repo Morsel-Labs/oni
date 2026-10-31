@@ -2021,7 +2021,8 @@ body.touch.menu:not(.landing):not(.vmenu) .panel.full.on{bottom:calc(var(--demo-
 #modes .md-free{margin:0;font:500 13px/1.4 Inter,system-ui,sans-serif;color:var(--mute)}#modes .md-free b{color:var(--ink)}
 #modes .md-tut{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 10px;background:#2E1A08;box-shadow:0 0 0 2px #7A4E00;font:500 13px/1.3 Inter,system-ui,sans-serif;color:var(--ink)}
 #modes .md-tut[hidden]{display:none}
-#modes .md-tut span{flex:1 1 160px}
+#modes .md-tut span{flex:1 1 100%}
+#modes .md-list .md-o:nth-child(4){grid-column:1/-1}
 #modes .md-tut button{min-height:44px;padding:0 12px;font:400 9px/1 var(--pix);color:#2A1300;background:var(--gold);border:0;box-shadow:0 3px 0 #7A4E00;cursor:pointer}
 #modes .md-tut #md-tut-no{background:transparent;color:var(--mute);box-shadow:none;text-decoration:underline}
 #modes .md-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -2039,10 +2040,10 @@ body.touch.menu:not(.landing):not(.vmenu) .panel.full.on{bottom:calc(var(--demo-
 @media (orientation:landscape) and (max-height:430px){
   #modes .md-card{width:min(640px,100%);gap:7px}
   #modes .md-list{grid-template-columns:1.3fr 1fr 1fr}
-  #modes .md-quick{grid-column:1;grid-row:span 1}
+  #modes .md-quick{grid-column:1;grid-row:1/span 2}
   #modes .md-o{min-height:58px;padding:8px 10px}#modes .md-quick{min-height:58px}#modes .md-quick b{font-size:12px}
   #modes .md-list .md-o:nth-child(4){grid-column:2/-1}
-  #modes .md-tut{padding:4px 8px}}
+  #modes .md-tut{padding:4px 8px;flex-wrap:nowrap}#modes .md-tut span{flex:1 1 auto}}
 /* quit confirm (second Back from the pause menu) */
 #nconf{z-index:75;align-items:center;padding:16px}
 #nconf .nc-card{display:flex;flex-direction:column;gap:10px;width:min(300px,92vw);padding:18px 16px 16px;background:#22100F;border:3px solid #0A0506;outline:2px solid var(--blood,#C1121F);box-shadow:0 6px 0 #000;font-family:var(--pix);text-align:center}

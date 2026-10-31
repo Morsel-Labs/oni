@@ -3109,9 +3109,9 @@ function modesGo(m){LS.set('oni-play-last',m);closeModes();
   else if(m==='online'){SFX.select();SEL.map=0;SEL.low=0;if(!owns(SEL.kit))SEL.kit='oni';openSelect('online');}
   else if(m==='arcade'){quickSetup();startArcade();}
   else if(m==='training'){quickSetup();startTraining();}}
-function openModes(){auInit();if(navModal())return;const d=modesBuild();const last=LS.get('oni-play-last','quick');quickSetup();
+function openModes(){auInit();if(navModal())return;const d=modesBuild();const seen=LS.get('oni-play-last',null),last=seen||'quick';quickSetup();
   const dl=(DIFFS.find(x=>x[0]===SEL.diff)||DIFFS[4])[1];
-  $('md-list').innerHTML=MODES.map(([k,t,s])=>`<button type="button" class="md-o${k==='quick'?' md-quick':''}" data-m="${k}"><b>${t}${k===last?'<i class="md-last">LAST</i>':''}</b><small>${k==='quick'?esc(CH[SEL.kit].name)+' · '+esc(MAPS[SEL.map].name)+' · '+dl+' · free':s}</small></button>`).join('');
+  $('md-list').innerHTML=MODES.map(([k,t,s])=>`<button type="button" class="md-o${k==='quick'?' md-quick':''}" data-m="${k}"><b>${t}${k===seen?'<i class="md-last">LAST</i>':''}</b><small>${k==='quick'?esc(CH[SEL.kit].name)+' · '+esc(MAPS[SEL.map].name)+' · '+dl+' · free':s}</small></button>`).join('');
   $('md-list').querySelectorAll('.md-o').forEach(b=>b.onclick=()=>modesGo(b.dataset.m));
   $('md-tut').hidden=!!LS.get('oni-tut-offer',0)||!!(STATS&&STATS.tut);
   d.hidden=false;SFX.select();navOverlay('modes',d,{close:closeModes,focus:'#md-list [data-m="'+last+'"]'});}
